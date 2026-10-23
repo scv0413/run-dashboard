@@ -104,7 +104,25 @@ section{margin-top:28px}
 .hero-top p{margin:2px 0 0;opacity:.85;font-size:13px}
 .kpis{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px;position:relative;z-index:1}
 @media (min-width:768px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (min-width:1200px){.kpis{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.hero-grid{display:grid;gap:16px;position:relative;z-index:1}
+@media (min-width:1100px){.hero-grid{grid-template-columns:minmax(0,1fr) 290px}}
+.hero-pr{background:#fff;color:#171717;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;min-width:0}
+.hero-pr h2{margin:0 0 4px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px}
+.hero-pr h2 svg{color:#593EEC}
+.pr-row{display:block;width:100%;text-align:left;border:0;background:none;padding:10px 0;border-top:1px solid #ECECEC;cursor:pointer;color:inherit}
+.pr-row:first-of-type{border-top:0}
+.pr-row:hover .pr-val{color:#593EEC}
+.pr-row:focus-visible{outline:2px solid #593EEC;outline-offset:2px;border-radius:8px}
+.pr-lab{font-size:12px;color:#6B6B6B;display:flex;align-items:center;gap:6px}
+.pr-lab .tag{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:#F2F3FF;color:#593EEC}
+.pr-val{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.pr-val small{font-size:13px;font-weight:600;color:#6B6B6B;margin-left:3px}
+.pr-sub{font-size:12px;color:#6B6B6B}
+.pred-box{border-top:1px solid #ECECEC;padding-top:10px;margin-top:2px}
+.pred-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin:8px 0}
+.pred-d{font-size:11.5px;color:#6B6B6B;font-weight:600}
+.pred-t{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.25}
+.pred-p{font-size:11.5px;color:#6B6B6B}
 .kpi{background:rgba(255,255,255,.14);border-radius:14px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:2px}
 .kpi .lab{font-size:12px;opacity:.9;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
@@ -157,21 +175,18 @@ section{margin-top:28px}
 .tab[aria-selected="true"]{background:var(--m1);border-color:var(--m1);color:#fff}
 
 /* PR cards */
-.prs{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
-@media (min-width:768px){.prs{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.prs{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .pr{border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;background:var(--card)}
 .pr .d{font-size:12px;color:var(--ink-2);font-weight:700}
 .pr .t{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
 .pr .p{font-size:12px;color:var(--ink-2)}
+.pr .ptag{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--q1);color:#33208F;vertical-align:1px}
+.pr .pred{color:var(--m1);font-weight:600}
+:root[data-theme="dark"] .pr .pred{color:var(--q4)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pr .pred{color:var(--q4)}}
 .pr .new{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--m1);color:#fff}
 .pr.empty .t{color:var(--ink-3)}
 .pr button.link{border:0;background:none;padding:0;color:var(--m1);font-size:12px;cursor:pointer;margin-top:4px;font-weight:600}
-.shoes{display:flex;flex-direction:column;gap:12px}
-.shoe .top{display:flex;justify-content:space-between;font-size:13px}
-.shoe .bar{height:8px;border-radius:4px;background:var(--soft);margin-top:6px;position:relative;overflow:hidden}
-.shoe .bar i{position:absolute;inset:0 auto 0 0;background:var(--s1);border-radius:4px}
-.shoe .bar b{position:absolute;top:0;bottom:0;width:2px;background:var(--bad)}
-.shoe .meta{font-size:12px;color:var(--ink-2);margin-top:4px}
 
 /* gauge */
 .gauge-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -249,6 +264,8 @@ tbody tr[tabindex]:hover{background:var(--soft)}
   <div id="mode-banner" class="banner hidden" role="status"></div>
   <!-- 5.1 HERO -->
   <div class="hero" aria-labelledby="hero-title">
+    <div class="hero-grid">
+    <div class="hero-main">
     <div class="hero-top">
       <div>
         <h1 id="hero-title">오늘의 상태</h1>
@@ -260,6 +277,12 @@ tbody tr[tabindex]:hover{background:var(--soft)}
     <div class="hero-comment">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#593EEC" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.9 5.8H20l-5 3.7 1.9 5.8L12 14.6 7.1 18.3 9 12.5 4 8.8h6.1z"/></svg>
       <ul id="hero-comment"></ul>
+    </div>
+    </div>
+    <aside class="hero-pr" aria-labelledby="hero-pr-title">
+      <h2 id="hero-pr-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>내 최고 기록</h2>
+      <div id="hero-pr"></div>
+    </aside>
     </div>
   </div>
 
@@ -299,16 +322,12 @@ tbody tr[tabindex]:hover{background:var(--soft)}
     <div class="sec-h"><h2 id="sec-pr">최고 기록</h2><p>역대 기록 · FIT 파일에서 계산</p></div>
     <div class="grid g3">
       <div class="card span3"><div class="prs" id="pr-cards"></div></div>
-      <div class="card span2">
+      <div class="card span3">
         <div class="card-h">
           <div><h3>PR 갱신 타임라인</h3><p class="sub">위로 갈수록 빠른 기록 · 점은 갱신 순간</p></div>
           <div class="tabs" role="tablist" id="pr-tabs"></div>
         </div>
         <div id="c-prline" class="chart"></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><div><h3>신발 누적 거리</h3><p class="sub">빨간 선은 교체 권장 구간 시작(600km)</p></div></div>
-        <div class="shoes" id="shoes"></div>
       </div>
     </div>
   </section>
@@ -447,7 +466,7 @@ tbody tr[tabindex]:hover{background:var(--soft)}
     </div>
   </section>
 
-  <p class="foot">데이터: Supabase(가민 FIT) · 기록이 없으면 샘플 데이터 · <a href="?mock=1">샘플 보기</a> · <a href="?mock=1&dynamics=1">러닝 다이내믹스 미리보기</a></p>
+  <p class="foot">데이터: Supabase(가민 FIT) · 기록이 없으면 샘플 데이터 · <a href="?mock=1">샘플 보기</a></p>
 </main>
 
 <!-- 활동 상세 드로어 -->
@@ -501,7 +520,7 @@ let NOW = new Date(2026, 9, 22, 8, 0);
 let START = new Date(2025, 0, 6);
 let LAST_DAY = new Date(2026, 9, 21);
 const SETTINGS = { max_hr: null, resting_hr: 60, target_cadence: 180, cadence_band: 5, weekly_goal_km: 40, privacy_radius_m: 200 };
-let GEAR = [], GARMIN = [], SYNC_AT = null;
+let GARMIN = [], SYNC_AT = null;
 
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const rnd = mulberry32(20261022);
@@ -683,8 +702,6 @@ function generateMock(){
     const R=ROUTES[r.route], poly=[];
     for(let x=SETTINGS.privacy_radius_m; x<=r.distance-SETTINGS.privacy_radius_m; x+=50) poly.push(R.pos(x).ll);
     r.poly = poly;
-    const hard = r.type==='race' || ((r.type==='tempo'||r.type==='interval') && r.start>=new Date(2026,2,1));
-    r.gear = hard ? 'race' : r.start < new Date(2025,6,1) ? 'shoeA' : r.start < new Date(2026,3,1) ? 'shoeB' : 'shoeC';
     if(SHOW_DYNAMICS){ const g=mulberry32(r.id); r.gct = 258-14*r.p-(r.easyPace-r.pace)/4+(g()-.5)*6; r.vr = 8.7-0.7*r.p-(r.easyPace-r.pace)/120+(g()-.5)*0.3; }
   }
   // 최대 심박 자동 추정 (최근 365일 최고값)
@@ -704,6 +721,17 @@ let RUN_BY_ID = new Map();
  * 3. 집계 (Supabase 뷰 v_weekly / v_daily_load / v_pr_timeline / v_calendar 역할)
  * ===================================================================== */
 function vdot(D, t){ const tm=t/60, v=D/tm; const vo2=-4.60+0.182258*v+0.000104*v*v; const pct=0.8+0.1894393*Math.exp(-0.012778*tm)+0.2989558*Math.exp(-0.1932605*tm); return vo2/pct; }
+function predictTime(D, v){            // VDOT v로 D미터를 달리는 데 걸리는 시간(초) — vdot(D,t)가 t에 대해 감소하므로 이분 탐색
+  let lo = D/8, hi = D/1.5;
+  for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(vdot(D,mid) > v) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+const PRED_DISTS = [{k:'5k',d:5000,l:'5K'},{k:'10k',d:10000,l:'10K'},{k:'half',d:21097.5,l:'하프'},{k:'full',d:42195,l:'풀'}];
+function predictions(){
+  const w = lastOf(WEEKS); if(!w || w.vdot==null) return null;
+  const out = {vdot:w.vdot}; for(const pd of PRED_DISTS) out[pd.k] = predictTime(pd.d, w.vdot);
+  return out;
+}
 function aggregate(){
 DAY = new Map();       // ymd → {m, runs[], trimp}
 for(const r of RUNS){ const k=ymd(r.start); if(!DAY.has(k)) DAY.set(k,{m:0,runs:[],trimp:0}); const o=DAY.get(k); o.m+=r.distance; o.runs.push(r); o.trimp+=r.trimp; }
@@ -848,6 +876,30 @@ function renderHero(){
   const cad4 = mean(WEEKS.slice(-4).filter(w=>w.cad).map(w=>w.cad));
   if(isFinite(cad4)) c.push(`최근 4주 평균 케이던스 <b>${Math.round(cad4)}spm</b> — 목표 ${SETTINGS.target_cadence}까지 ${Math.max(0,Math.round(SETTINGS.target_cadence-cad4))}spm 남았어요.`);
   document.getElementById('hero-comment').innerHTML = c.map(x=>`<li>${x}</li>`).join('');
+  renderHeroRecords();
+}
+function renderHeroRecords(){
+  const dstr = d => `${d.getFullYear()}.${md(d)}`;
+  const rows = [];
+  // VO2max: 가민 입력값 중 최고, 없으면 주간 VDOT(추정) 중 최고
+  const gv = GARMIN.filter(g=>g.vo2max!=null);
+  if(gv.length){
+    const b = gv.reduce((a,g)=>+g.vo2max>+a.vo2max?g:a);
+    rows.push({lab:'VO2max', tag:'가민', val:fx(+b.vo2max), unit:'', sub:`${b.date.replace(/-/g,'.')} 기록`});
+  } else {
+    const w = WEEKS.filter(w=>w.vdot!=null).reduce((a,w)=>!a||w.vdot>a.vdot?w:a, null);
+    if(w){ const r = RUNS.filter(r=>r.start>=w.start && r.start<addDays(w.start,7)).sort((x,y)=>y.distance-x.distance)[0];
+      rows.push({lab:'VO2max', tag:'추정', val:fx(w.vdot), unit:'', sub:`${dstr(w.start)} 주 · VDOT`, run:r&&r.id}); }
+  }
+  // 페이스: 1K 최고 기록 기준 (5K 최고 기록의 평균 페이스를 함께 표시)
+  const k1 = PR['1k'] && PR['1k'].best, k5 = PR['5k'] && PR['5k'].best;
+  if(k1) rows.push({lab:'페이스 (1K 최고)', val:fmtPace(k1.t), unit:'/km', sub:`${dstr(k1.run.start)}`+(k5?` · 5K 평균 ${fmtPace(k5.t/5)}/km`:''), run:k1.run.id});
+  // 거리: 가장 멀리 달린 러닝
+  const far = RUNS.length ? RUNS.reduce((a,r)=>r.distance>a.distance?r:a) : null;
+  if(far) rows.push({lab:'최장 거리', val:f1(km(far.distance)), unit:'km', sub:`${dstr(far.start)} · ${fmtPace(far.pace)}/km · ${fmtDur(far.moving_s)}`, run:far.id});
+  const pr = predictions();
+  const predHtml = pr ? `<div class="pred-box"><div class="pr-lab">예상 기록 <span class="tag">VDOT ${fx(pr.vdot)}</span></div><div class="pred-grid">${PRED_DISTS.map(pd=>`<div><div class="pred-d">${pd.l}</div><div class="pred-t num">${fmtDur(pr[pd.k])}</div><div class="pred-p num">${fmtPace(pr[pd.k]/(pd.d/1000))}/km</div></div>`).join('')}</div><div class="pr-sub">최근 90일 최고 기록 기준 추정. 주간 거리가 적으면 하프·풀은 낙관적일 수 있어요.</div></div>` : '';
+  document.getElementById('hero-pr').innerHTML = (rows.length ? rows.map(r=>`<${r.run?'button':'div'} class="pr-row"${r.run?` data-run="${r.run}" type="button"`:''}><div class="pr-lab">${esc(r.lab)}${r.tag?` <span class="tag">${esc(r.tag)}</span>`:''}</div><div class="pr-val num">${esc(r.val)}${r.unit?`<small>${esc(r.unit)}</small>`:''}</div><div class="pr-sub num">${esc(r.sub)}</div></${r.run?'button':'div'}>`).join('') : '<p class="pr-sub" style="margin:8px 0 0">기록이 쌓이면 최고 기록이 여기에 표시돼요.</p>') + predHtml;
 }
 
 /* =====================================================================
@@ -939,11 +991,16 @@ function renderYoY(){
  * ===================================================================== */
 let prTab = '5k';
 function renderPR(){
+  const PRED = predictions() || {};
   document.getElementById('pr-cards').innerHTML = PR_DISTS.map(pd=>{
     const b = PR[pd.k].best;
-    if(!b) return `<div class="pr empty"><div class="d">${pd.l}</div><div class="t">—</div><div class="p">아직 기록이 없어요</div></div>`;
+    const pt = PRED[pd.k];
+    if(!b){
+      if(!pt) return '';
+      return `<div class="pr"><div class="d">${pd.l} <span class="ptag">예상</span></div><div class="t num">${fmtDur(pt)}</div><div class="p num">${fmtPace(pt/(pd.d/1000))}/km · 실제 기록 없음</div></div>`;
+    }
     const isNew = (NOW-b.run.start) < 30*864e5;
-    return `<div class="pr">${isNew?'<span class="new">NEW</span>':''}<div class="d">${pd.l}</div><div class="t num">${fmtDur(b.t)}</div><div class="p num">${fmtPace(b.t/(pd.d/1000))}/km · ${b.run.start.getFullYear()}.${md(b.run.start)}</div><button class="link" data-run="${b.run.id}">${esc(b.run.name)} 보기 ›</button></div>`;
+    return `<div class="pr">${isNew?'<span class="new">NEW</span>':''}<div class="d">${pd.l}</div><div class="t num">${fmtDur(b.t)}</div><div class="p num">${fmtPace(b.t/(pd.d/1000))}/km · ${b.run.start.getFullYear()}.${md(b.run.start)}</div>${pt?`<div class="p num pred">예상 ${fmtDur(pt)}</div>`:''}<button class="link" data-run="${b.run.id}">${esc(b.run.name)} 보기 ›</button></div>`;
   }).join('');
   document.getElementById('pr-tabs').innerHTML = PR_DISTS.filter(pd=>PR[pd.k].best).map(pd=>`<button class="tab" role="tab" aria-selected="${pd.k===prTab}" data-k="${pd.k}">${pd.l}</button>`).join('');
   if(!PR[prTab].best){ const f=PR_DISTS.find(x=>PR[x.k].best); if(f) prTab=f.k; }
@@ -957,20 +1014,6 @@ function renderPR(){
     series:[{type:'line', step:'end', data, symbol:'circle', symbolSize:9, lineStyle:{width:2,color:C('--s1')}, itemStyle:{color:C('--s1'),borderColor:C('--card'),borderWidth:2}}],
   });
   if(c && !c._bound){ c._bound=true; c.on('click', p=>{ if(p.data && p.data.run) openDrawer(p.data.run); }); }
-
-  const shoeDefs = MODE==='real'
-    ? GEAR.map(g=>({k:g.id, n:g.name, since:'', retired:g.retired, base:+g.distance_m||0}))
-    : [
-    {k:'shoeC', n:'데일리 러닝화 C', since:'2026.04~'},
-    {k:'race',  n:'카본 레이싱화', since:'레이스 · 2026.03~ 스피드 훈련'},
-    {k:'shoeB', n:'데일리 러닝화 B', since:'2025.07–2026.03', retired:true},
-    {k:'shoeA', n:'데일리 러닝화 A', since:'~2025.06', retired:true},
-  ];
-  if(!shoeDefs.length){ document.getElementById('shoes').innerHTML = '<p class="sub" style="margin:0">등록된 신발이 없어요. Supabase <b>gear</b> 테이블에 신발을 추가하고, 활동의 <b>gear_id</b>에 지정하면 누적 거리가 표시돼요.</p>'; return; }
-  const shoes = shoeDefs.map(s=>({...s, m:Math.max(s.base||0, RUNS.filter(r=>r.gear===s.k).reduce((a,r)=>a+r.distance,0))}));
-  const mx = Math.max(900, ...shoes.map(s=>km(s.m)));
-  document.getElementById('shoes').innerHTML = shoes.map(s=>{ const k=km(s.m), st = s.retired?chip('mute','','은퇴'):k>=800?chip('bad','warn','교체 필요'):k>=600?chip('warn','warn','교체 권장'):chip('good','ok','양호');
-    return `<div class="shoe"><div class="top"><b>${esc(s.n)}</b><span class="num">${Math.round(k)}km</span></div><div class="bar"><i style="width:${clamp(k/mx*100,0,100)}%"></i><b style="left:${600/mx*100}%"></b></div><div class="meta">${s.since?esc(s.since)+' · ':''}${st}</div></div>`; }).join('');
 }
 
 /* =====================================================================
@@ -1391,10 +1434,9 @@ const ACT_COLS = 'id,start_at,name,sport_type,distance_m,moving_s,elapsed_s,elev
 async function loadReal(){
   const acts = await sbGet(`v_activities?select=${ACT_COLS}&order=start_at.asc`);
   if(!acts.length) return false;
-  const [efforts, st, gear, metrics, sync] = await Promise.all([
+  const [efforts, st, metrics, sync] = await Promise.all([
     sbGet('best_efforts?select=activity_id,effort_key,elapsed_s'),
     sbGet('v_settings?select=*'),
-    sbGet('gear?select=*').catch(()=>[]),
     sbGet('daily_metrics?select=date,vo2max,acute_load,recovery_hours,resting_hr&order=date.asc').catch(()=>[]),
     sbGet('v_sync_status?select=*').catch(()=>[]),
   ]);
@@ -1417,7 +1459,7 @@ async function loadReal(){
   // 종류 자동 분류: 15km 이상 롱런, 기간 중앙 페이스보다 8% 이상 빠르면 템포, 그 외 이지 (FIT에는 훈련 종류가 없음)
   const med = [...RUNS].map(r=>r.pace).sort((x,y)=>x-y)[Math.floor(RUNS.length/2)];
   for(const r of RUNS) r.type = r.distance>=15000 ? 'long' : r.pace < med*0.92 ? 'tempo' : 'easy';
-  GEAR = gear; GARMIN = metrics;
+  GARMIN = metrics;
   const ts = sync.map(x=>x.last_success_at).filter(Boolean).sort();
   SYNC_AT = ts.length ? new Date(lastOf(ts)) : null;
   NOW = new Date();
