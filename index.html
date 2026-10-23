@@ -1,0 +1,1450 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Run Log</title>
+<meta name="description" content="가민 러닝 기록·분석 대시보드 (목데이터 목업)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --bg:#F2F3FF; --card:#FFFFFF; --ink:#171717; --ink-2:#6B6B6B; --ink-3:#8B8B8B; --line:#ECECEC; --soft:#F3F3F3;
+  --m1:#593EEC; --m2:#7E71FF; --m5:#D5D4FF; --m6:#9C9AFD;
+  --s1:#593EEC; --s2:#E0A100;
+  --q0:#ECECEC; --q1:#D5D4FF; --q2:#9C9AFD; --q3:#7E71FF; --q4:#593EEC;
+  --z1:#E3E1FF; --z2:#B3ABFF; --z3:#7E71FF; --z4:#593EEC; --z5:#33208F;
+  --good:#1E8E3E; --warn:#9A6B00; --bad:#D93025; --info:#1F7AC2;
+  --route-easy:#2BC53B; --route-mid:#FFC617; --route-hard:#FF473A;
+  --hero-ink:#FFFFFF;
+  --radius:16px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171717; --card:#232323; --ink:#F3F3F3; --ink-2:#A8A8A8; --ink-3:#8B8B8B; --line:#333333; --soft:#2B2B2B;
+    --s1:#7E71FF; --s2:#B88700;
+    --q0:#2C2C2C; --q1:#3B3470; --q2:#5A4FC0; --q3:#7E71FF; --q4:#B3ABFF;
+    --z1:#3B3470; --z2:#5A4FC0; --z3:#7E71FF; --z4:#ACA6FF; --z5:#E3E1FF;
+    --good:#5CFF62; --warn:#FFC617; --bad:#FF6B60; --info:#55B4FF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171717; --card:#232323; --ink:#F3F3F3; --ink-2:#A8A8A8; --ink-3:#8B8B8B; --line:#333333; --soft:#2B2B2B;
+  --s1:#7E71FF; --s2:#B88700;
+  --q0:#2C2C2C; --q1:#3B3470; --q2:#5A4FC0; --q3:#7E71FF; --q4:#B3ABFF;
+    --z1:#3B3470; --z2:#5A4FC0; --z3:#7E71FF; --z4:#ACA6FF; --z5:#E3E1FF;
+  --good:#5CFF62; --warn:#FFC617; --bad:#FF6B60; --info:#55B4FF;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+a{color:var(--m1)}
+
+/* header */
+.topbar{position:sticky;top:0;z-index:500;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:-.02em}
+.logo i{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--m1),var(--m2));display:grid;place-items:center}
+.logo i svg{width:16px;height:16px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.badge .dot{width:7px;height:7px;border-radius:50%}
+.badge.est{color:var(--m1);background:color-mix(in srgb,var(--m1) 10%,var(--card));border-color:transparent}
+:root[data-theme="dark"] .badge.est{color:var(--q4)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .badge.est{color:var(--q4)}}
+@media (max-width:640px){.top-right .opt{display:none}.topbar-in{flex-wrap:nowrap}}
+.icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer}
+.icon-btn:focus-visible,.seg button:focus-visible,.tab:focus-visible,tr[tabindex]:focus-visible,.cal-day:focus-visible{outline:2px solid var(--m1);outline-offset:2px}
+
+main{max-width:1240px;margin:0 auto;padding:16px 16px 64px}
+section{margin-top:28px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 12px;flex-wrap:wrap}
+.sec-h h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.sec-h p{margin:0;color:var(--ink-2);font-size:13px}
+.grid{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:768px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.span2{grid-column:span 2}}
+@media (min-width:1200px){.grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g3 .span2{grid-column:span 2}.g3 .span3{grid-column:span 3}}
+@media (min-width:768px) and (max-width:1199px){.g3 .span3{grid-column:span 2}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.card h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.card .sub{margin:2px 0 0;color:var(--ink-2);font-size:12.5px}
+.card-h{display:flex;align-items:flex-start;gap:8px;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.chart{width:100%;height:240px}
+.chart.tall{height:300px}
+.chart.short{height:170px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .k-rect{width:10px;height:10px;border-radius:3px}
+.legend .k-line{width:14px;height:2px;border-radius:2px}
+.legend .k-dash{width:14px;height:0;border-top:2px dashed}
+.insight{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:13px;color:var(--ink)}
+.insight b{font-weight:700}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.chip svg{width:12px;height:12px}
+.chip.good{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+.chip.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent)}
+.chip.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.chip.info{color:var(--info);background:color-mix(in srgb,var(--info) 14%,transparent)}
+.chip.mute{color:var(--ink-2);background:var(--soft)}
+
+/* hero */
+.hero{background:linear-gradient(135deg,#593EEC 0%,#7E71FF 100%);color:var(--hero-ink);border-radius:20px;padding:20px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.hero-top h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.hero-top p{margin:2px 0 0;opacity:.85;font-size:13px}
+.kpis{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px;position:relative;z-index:1}
+@media (min-width:768px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:1200px){.kpis{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.kpi{background:rgba(255,255,255,.14);border-radius:14px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.kpi .lab{font-size:12px;opacity:.9;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.kpi .val small{font-size:13px;font-weight:600;opacity:.85;margin-left:2px}
+.kpi .delta{font-size:12px;opacity:.9}
+.kpi .mini{display:flex;align-items:center;gap:10px;margin-top:4px}
+.kpi .tag{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.22)}
+.kpi .chip{background:#fff}
+.kpi .chip.good{color:#1E8E3E}.kpi .chip.warn{color:#9A6B00}.kpi .chip.bad{color:#D93025}.kpi .chip.info{color:#1F7AC2}
+.ring{flex:none}
+.hero-comment{margin-top:14px;background:rgba(255,255,255,.95);color:#171717;border-radius:14px;padding:12px 14px;font-size:13.5px;position:relative;z-index:1;display:flex;gap:10px;align-items:flex-start}
+.hero-comment svg{flex:none;margin-top:2px}
+.hero-comment ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+
+/* stats row */
+.stats{display:flex;gap:20px;flex-wrap:wrap}
+.stat .v{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.stat .v small{font-size:13px;font-weight:600;color:var(--ink-2);margin-left:2px}
+.stat .l{font-size:12px;color:var(--ink-2)}
+
+/* calendar */
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cal-heat{height:150px;min-width:760px}
+.heat-legend{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-2);margin-top:4px;justify-content:flex-end}
+.heat-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.month-nav{display:flex;align-items:center;gap:6px}
+.month-nav button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.month-nav strong{min-width:84px;text-align:center;font-size:14px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-dow{font-size:11px;color:var(--ink-2);text-align:center;padding:2px 0}
+.cal-day{aspect-ratio:1/1.05;border-radius:10px;background:var(--soft);padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;font-size:11px;border:1px solid transparent;min-width:0}
+.cal-day.out{opacity:.3}
+.cal-day.run{background:color-mix(in srgb,var(--m1) 9%,var(--card));border-color:color-mix(in srgb,var(--m1) 25%,transparent);cursor:pointer}
+.cal-day.today{border-color:var(--m1);border-width:2px}
+.cal-day .d{align-self:flex-start;color:var(--ink-2);font-weight:600}
+.cal-day .km{font-weight:800;font-size:11.5px}
+.cal-day svg{width:60%;height:auto;max-height:40%}
+@media (max-width:480px){.cal-day svg{display:none}.cal-day .km{font-size:10.5px}}
+
+/* filter bar */
+.filterbar{position:sticky;top:var(--hdr,55px);z-index:400;margin-top:28px;padding:10px 0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filterbar .lab{font-weight:700;font-size:13px}
+.filterbar .range{color:var(--ink-2);font-size:12.5px}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--m1);color:#fff}
+.seg.small button{padding:4px 10px;font-size:12px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--m1);border-color:var(--m1);color:#fff}
+
+/* PR cards */
+.prs{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:768px){.prs{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.pr{border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;background:var(--card)}
+.pr .d{font-size:12px;color:var(--ink-2);font-weight:700}
+.pr .t{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.pr .p{font-size:12px;color:var(--ink-2)}
+.pr .new{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--m1);color:#fff}
+.pr.empty .t{color:var(--ink-3)}
+.pr button.link{border:0;background:none;padding:0;color:var(--m1);font-size:12px;cursor:pointer;margin-top:4px;font-weight:600}
+.shoes{display:flex;flex-direction:column;gap:12px}
+.shoe .top{display:flex;justify-content:space-between;font-size:13px}
+.shoe .bar{height:8px;border-radius:4px;background:var(--soft);margin-top:6px;position:relative;overflow:hidden}
+.shoe .bar i{position:absolute;inset:0 auto 0 0;background:var(--s1);border-radius:4px}
+.shoe .bar b{position:absolute;top:0;bottom:0;width:2px;background:var(--bad)}
+.shoe .meta{font-size:12px;color:var(--ink-2);margin-top:4px}
+
+/* gauge */
+.gauge-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.gauge-txt .big{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.gauge-txt .big small{font-size:14px;color:var(--ink-2);margin-left:2px}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:12px;color:var(--ink-2);font-weight:600;text-align:right;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+tbody tr[tabindex]{cursor:pointer}
+tbody tr[tabindex]:hover{background:var(--soft)}
+.typ{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--soft);color:var(--ink-2);margin-right:6px}
+
+/* maps */
+.map{height:380px;border-radius:12px;overflow:hidden;background:var(--soft);isolation:isolate}
+.leaflet-container{font-family:inherit}
+.leaflet-tile-pane{filter:grayscale(.85) contrast(.95) brightness(1.04)}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:grayscale(1) invert(1) brightness(.85) contrast(.9)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:grayscale(1) invert(1) brightness(.85) contrast(.9)}}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1900;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100vw);background:var(--bg);z-index:1901;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+.drawer.on{transform:none}
+.drawer-h{position:sticky;top:0;background:var(--bg);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid var(--line);z-index:5}
+.drawer-h h2{margin:0;font-size:18px;font-weight:800}
+.drawer-h p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
+.drawer-b{padding:16px;display:flex;flex-direction:column;gap:12px}
+.dstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (min-width:640px){.dstats{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.dstat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+.dstat .v{font-size:18px;font-weight:800}
+.dstat .l{font-size:11.5px;color:var(--ink-2)}
+#d-map{height:320px}
+.grad-legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);margin-top:8px}
+.grad-legend i{flex:1;max-width:180px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--route-easy),var(--route-mid),var(--route-hard))}
+.split-bar{display:inline-block;height:8px;border-radius:4px;background:var(--s1);vertical-align:middle}
+
+/* tooltip */
+.tt-t{font-size:12px;color:var(--ink-2);margin-bottom:4px}
+.tt-r{display:flex;align-items:center;gap:8px;font-size:12.5px;line-height:1.6}
+.tt-r b{font-weight:800;color:var(--ink)}
+.tt-r span{color:var(--ink-2)}
+.tt-k{width:10px;height:2px;border-radius:2px;display:inline-block;flex:none}
+
+.hidden{display:none!important}
+.banner{margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:13px;background:color-mix(in srgb,var(--warn) 14%,var(--card));border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);color:var(--ink)}
+.banner code{font-size:12px;background:var(--soft);padding:1px 6px;border-radius:6px}
+#d-map.nogps::after{content:"GPS 경로가 없는 활동이에요";position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:13px;background:var(--soft);z-index:500}
+#d-map{position:relative}
+.foot{margin-top:40px;color:var(--ink-2);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 4-5 7-6s5 1 9-4"/><circle cx="20" cy="8" r="1.5" fill="#fff"/></svg></i>My Run Log</div>
+    <div class="top-right">
+      <span class="badge opt"><span class="dot" style="background:var(--m1)"></span>가민 FIT</span>
+      <span class="badge opt"><span class="dot" style="background:var(--ink-3)"></span>Garmin · 수동 입력</span>
+      <span class="badge num" id="sync-at">동기화 —</span>
+      <button class="icon-btn" id="theme-btn" aria-label="다크 모드 전환" title="다크 모드 전환">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="mode-banner" class="banner hidden" role="status"></div>
+  <!-- 5.1 HERO -->
+  <div class="hero" aria-labelledby="hero-title">
+    <div class="hero-top">
+      <div>
+        <h1 id="hero-title">오늘의 상태</h1>
+        <p id="hero-date" class="num"></p>
+      </div>
+      <span class="badge" style="background:rgba(255,255,255,.18);border-color:transparent;color:#fff">추정값은 <b style="margin:0 2px">추정</b> 표시 · 가민 값을 입력하면 그 값으로 대체</span>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="hero-comment">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#593EEC" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.9 5.8H20l-5 3.7 1.9 5.8L12 14.6 7.1 18.3 9 12.5 4 8.8h6.1z"/></svg>
+      <ul id="hero-comment"></ul>
+    </div>
+  </div>
+
+  <!-- 5.2 꾸준함 -->
+  <section aria-labelledby="sec-consist">
+    <div class="sec-h"><h2 id="sec-consist">꾸준함</h2><p>최근 1년 · 기간 필터와 무관</p></div>
+    <div class="grid g3">
+      <div class="card span3">
+        <div class="card-h">
+          <div><h3>러닝 잔디</h3><p class="sub">칸 색이 진할수록 그날 많이 달렸어요. 칸을 누르면 상세 기록이 열려요.</p></div>
+          <div class="stats" id="streak-stats"></div>
+        </div>
+        <div class="scroll-x"><div id="c-calheat" class="cal-heat"></div></div>
+        <div class="heat-legend" id="heat-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <div><h3>월간 달력</h3><p class="sub" id="month-sum"></p></div>
+          <div class="month-nav"><button id="m-prev" aria-label="이전 달">‹</button><strong id="m-label" class="num"></strong><button id="m-next" aria-label="다음 달">›</button></div>
+        </div>
+        <div class="cal-grid" id="month-cal"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>언제 달리나요</h3><p class="sub">요일 × 시작 시각별 러닝 횟수</p></div></div>
+        <div id="c-punch" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>누적 거리: 올해 vs 작년</h3><p class="sub" id="yoy-sub"></p></div></div>
+        <div id="c-yoy" class="chart"></div>
+        <div class="legend"><span><i class="k-line" style="background:var(--s1)"></i>2026</span><span><i class="k-line" style="background:var(--s2)"></i>2025</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.7 최고 기록 -->
+  <section aria-labelledby="sec-pr">
+    <div class="sec-h"><h2 id="sec-pr">최고 기록</h2><p>역대 기록 · FIT 파일에서 계산</p></div>
+    <div class="grid g3">
+      <div class="card span3"><div class="prs" id="pr-cards"></div></div>
+      <div class="card span2">
+        <div class="card-h">
+          <div><h3>PR 갱신 타임라인</h3><p class="sub">위로 갈수록 빠른 기록 · 점은 갱신 순간</p></div>
+          <div class="tabs" role="tablist" id="pr-tabs"></div>
+        </div>
+        <div id="c-prline" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>신발 누적 거리</h3><p class="sub">빨간 선은 교체 권장 구간 시작(600km)</p></div></div>
+        <div class="shoes" id="shoes"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 기간 필터: 아래 모든 섹션에 적용 -->
+  <div class="filterbar" role="group" aria-label="분석 기간">
+    <span class="lab">분석 기간</span>
+    <div class="seg" id="period-seg">
+      <button data-w="4" aria-pressed="false">4주</button>
+      <button data-w="12" aria-pressed="true">12주</button>
+      <button data-w="52" aria-pressed="false">1년</button>
+      <button data-w="0" aria-pressed="false">전체</button>
+    </div>
+    <span class="range num" id="period-range"></span>
+  </div>
+
+  <!-- 5.3 훈련량 -->
+  <section aria-labelledby="sec-vol" style="margin-top:8px">
+    <div class="sec-h"><h2 id="sec-vol">훈련량</h2><p id="vol-sub"></p></div>
+    <div class="grid">
+      <div class="card span2">
+        <div class="card-h">
+          <div><h3>주간 거리</h3><p class="sub">막대는 주간 거리, 선은 최근 4주 이동평균</p></div>
+          <div class="stats" id="vol-stats"></div>
+        </div>
+        <div id="c-weekly" class="chart"></div>
+        <div class="legend"><span><i class="k-rect" style="background:var(--s1)"></i>주간 거리</span><span><i class="k-line" style="background:var(--s2)"></i>4주 이동평균</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.4 효율 -->
+  <section aria-labelledby="sec-eff">
+    <div class="sec-h"><h2 id="sec-eff">효율 · 페이스 대비 심박</h2><p>같은 심박으로 더 빨리 달리게 됐는지</p></div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h">
+          <div><h3>효율 지수(EF) 추이</h3><p class="sub">분당 이동 거리 ÷ 평균 심박 = 심박 1회당 m · 높을수록 좋음</p></div>
+          <span id="ef-chip"></span>
+        </div>
+        <div id="c-ef" class="chart"></div>
+        <div class="legend"><span><i class="k-rect" style="background:var(--s1);opacity:.35;border-radius:50%"></i>러닝 1회</span><span><i class="k-line" style="background:var(--s1)"></i>4주 이동평균</span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>페이스–심박 분포</h3><p class="sub">이지·롱런만 · 진할수록 최근 · 오른쪽 아래로 갈수록 좋아진 것</p></div></div>
+        <div id="c-pacehr" class="chart"></div>
+        <div class="legend" id="pacehr-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <div><h3>주간 심박 존 분포</h3><p class="sub" id="zone-sub"></p></div>
+          <span id="zone-chip"></span>
+        </div>
+        <div id="c-zones" class="chart"></div>
+        <div class="legend" id="zone-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>유산소 디커플링</h3><p class="sub">60분 이상 러닝의 전반 대비 후반 효율 저하 · 5% 미만이면 유산소 기반 양호</p></div></div>
+        <div id="c-decouple" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.5 러닝 폼 -->
+  <section aria-labelledby="sec-form">
+    <div class="sec-h"><h2 id="sec-form">러닝 폼</h2><p>케이던스 · 보폭 (보폭은 속도 ÷ 케이던스로 추정)</p></div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-h">
+          <div><h3>케이던스 추이</h3><p class="sub">주간 평균 spm · 음영은 목표 범위 175–185</p></div>
+          <span id="cad-chip"></span>
+        </div>
+        <div id="c-cad" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>보폭 vs 페이스</h3><p class="sub">점 색 = 케이던스 · 선은 기간 앞/뒤 절반의 추세</p></div></div>
+        <div id="c-stride" class="chart"></div>
+        <div class="legend" id="stride-legend"></div>
+      </div>
+      <div class="card span2">
+        <p class="insight" id="stride-insight" style="margin:0"></p>
+      </div>
+      <div class="card hidden" id="dyn-gct-card">
+        <div class="card-h"><div><h3>지면 접촉 시간 (주차별)</h3><p class="sub">ms · 낮을수록 효율적 · 가민 러닝 다이내믹스</p></div></div>
+        <div id="c-gct" class="chart"></div>
+      </div>
+      <div class="card hidden" id="dyn-vr-card">
+        <div class="card-h"><div><h3>수직 진동비 (주차별)</h3><p class="sub">% · 낮을수록 효율적 · 가민 러닝 다이내믹스</p></div></div>
+        <div id="c-vr" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.6 부하 & 회복 -->
+  <section aria-labelledby="sec-load">
+    <div class="sec-h"><h2 id="sec-load">훈련 부하 &amp; 회복</h2><p>TRIMP(심박 기반) 추정 · 가민 연동 시 Acute Load로 대체</p></div>
+    <div class="grid g3">
+      <div class="card span2">
+        <div class="card-h"><div><h3>급성(7일) vs 만성(28일) 부하</h3><p class="sub">급성 = 최근 7일 TRIMP 합 · 만성 = 최근 28일 주 평균</p></div><span class="badge est">추정</span></div>
+        <div id="c-load" class="chart"></div>
+        <div class="legend"><span><i class="k-line" style="background:var(--s1)"></i>급성 부하</span><span><i class="k-line" style="background:var(--s2)"></i>만성 부하</span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>회복</h3><p class="sub">마지막 러닝 부하 기반 단순 회복 모델</p></div><span class="badge est">추정</span></div>
+        <div class="gauge-wrap" id="recovery"></div>
+        <div id="c-load7" class="chart short" style="margin-top:8px"></div>
+      </div>
+      <div class="card span2">
+        <div class="card-h"><div><h3>ACWR (급성 ÷ 만성)</h3><p class="sub">0.8–1.3 적정 · 1.5 초과 시 부상 위험 증가</p></div><span id="acwr-chip"></span></div>
+        <div id="c-acwr" class="chart short"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>VO2max 추이</h3><p class="sub" id="vo2-sub">최근 90일 best effort 기반 VDOT</p></div><span class="badge est" id="vo2-badge">VDOT 추정</span></div>
+        <div id="c-vo2" class="chart short"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5.8 코스 -->
+  <section aria-labelledby="sec-route">
+    <div class="sec-h"><h2 id="sec-route">코스 &amp; 고도</h2><p>시작·종료 200m는 개인정보 보호를 위해 잘라서 표시</p></div>
+    <div class="grid">
+      <div class="card span2">
+        <div class="card-h"><div><h3>나의 러닝 지도</h3><p class="sub">기간 내 모든 경로를 겹쳐 그렸어요 · 진할수록 자주 달린 길 · 선을 누르면 상세</p></div></div>
+        <div id="routes-map" class="map"></div>
+      </div>
+      <div class="card span2">
+        <div class="card-h"><div><h3>러닝 기록</h3><p class="sub" id="act-sub"></p></div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th class="l">날짜</th><th class="l">러닝</th><th>거리</th><th>시간</th><th>페이스</th><th>심박</th><th>케이던스</th><th>상승</th></tr></thead>
+            <tbody id="act-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">데이터: Supabase(가민 FIT) · 기록이 없으면 샘플 데이터 · <a href="?mock=1">샘플 보기</a> · <a href="?mock=1&dynamics=1">러닝 다이내믹스 미리보기</a></p>
+</main>
+
+<!-- 활동 상세 드로어 -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title" aria-hidden="true">
+  <div class="drawer-h">
+    <div style="flex:1;min-width:0"><h2 id="d-title"></h2><p id="d-sub" class="num"></p></div>
+    <button class="icon-btn" id="d-close" aria-label="닫기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="drawer-b">
+    <div class="dstats" id="d-stats"></div>
+    <div class="card">
+      <div class="card-h">
+        <div><h3>경로</h3><p class="sub">차트 위에 커서를 올리면 지도에 같은 지점이 표시돼요</p></div>
+        <div class="seg small" id="d-mode">
+          <button data-m="pace" aria-pressed="true">페이스</button>
+          <button data-m="hr" aria-pressed="false">심박</button>
+          <button data-m="grade" aria-pressed="false">경사</button>
+        </div>
+      </div>
+      <div id="d-map" class="map"></div>
+      <div class="grad-legend"><span id="d-leg-lo">편안</span><i></i><span id="d-leg-hi">힘듦</span></div>
+    </div>
+    <div class="card">
+      <h3>고도 프로필</h3><p class="sub">음영은 경사 4% 이상 오르막</p>
+      <div id="d-elev" class="chart short"></div>
+      <h3 style="margin-top:8px">페이스</h3>
+      <div id="d-pace" class="chart short"></div>
+      <h3 style="margin-top:8px">심박</h3>
+      <div id="d-hr" class="chart short"></div>
+    </div>
+    <div class="card">
+      <h3>1km 스플릿</h3>
+      <div class="tbl-wrap" style="margin-top:6px">
+        <table><thead><tr><th class="l">km</th><th class="l" style="width:40%">페이스</th><th></th><th>심박</th><th>케이던스</th><th>고도차</th></tr></thead><tbody id="d-splits"></tbody></table>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+/* =====================================================================
+ * 0. 유틸
+ * ===================================================================== */
+const SHOW_DYNAMICS = new URLSearchParams(location.search).has('dynamics');
+const SB_URL = 'https://mvneezvxicouuqoccftz.supabase.co';
+const SB_KEY = 'sb_publishable_zy5uZI9vnSKysVnFcf--RA_8MWtXTvQ';   // 공개 키: RLS로 SELECT만 가능
+const FORCE_MOCK = new URLSearchParams(location.search).has('mock');
+let MODE = 'mock';                     // 'real' | 'mock'
+let NOW = new Date(2026, 9, 22, 8, 0);
+let START = new Date(2025, 0, 6);
+let LAST_DAY = new Date(2026, 9, 21);
+const SETTINGS = { max_hr: null, resting_hr: 60, target_cadence: 180, cadence_band: 5, weekly_goal_km: 40, privacy_radius_m: 200 };
+let GEAR = [], GARMIN = [], SYNC_AT = null;
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd = mulberry32(20261022);
+const rr = (a,b)=>a+(b-a)*rnd();
+const pick = arr => arr[Math.floor(rnd()*arr.length)];
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const dayStart = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const weekStart = d => { const x=dayStart(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; };
+const DOW = ['일','월','화','수','목','금','토'];
+function fmtPace(s){ s=Math.round(s); return `${Math.floor(s/60)}:${pad(s%60)}`; }
+function fmtDur(s){ s=Math.round(s); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return h?`${h}:${pad(m)}:${pad(x)}`:`${m}:${pad(x)}`; }
+const km = m => m/1000;
+const f1 = x => x.toFixed(1);
+const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : NaN;
+const fx = (v,n=1,dash='—') => (v==null || !isFinite(v)) ? dash : v.toFixed(n);
+const lastOf = (a,n=1) => a[a.length-n];
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const C = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function linfit(xs, ys){ const n=xs.length, mx=mean(xs), my=mean(ys); let sxy=0,sxx=0; for(let i=0;i<n;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;} const b=sxx?sxy/sxx:0; return {a:my-b*mx,b}; }
+
+/* =====================================================================
+ * 1. 코스 (목) — 경로 웨이포인트 + 고도 함수
+ * ===================================================================== */
+const M_LAT = 111320, M_LNG = 111320*Math.cos(37.53*Math.PI/180);
+const gdist = (a,b)=>Math.hypot((a[0]-b[0])*M_LAT,(a[1]-b[1])*M_LNG);
+function ellipse(c, rx, ry, n, seed){ const g=mulberry32(seed), pts=[]; for(let i=0;i<n;i++){ const t=i/n*2*Math.PI, j=(g()-.5)*60; pts.push([c[0]+(ry*Math.sin(t)+j)/M_LAT, c[1]+(rx*Math.cos(t)+j)/M_LNG]); } return pts; }
+function makePath(pts, closed, altFn, label){
+  const P = closed ? [...pts, pts[0]] : pts, cum=[0];
+  for(let i=1;i<P.length;i++) cum.push(cum[i-1]+gdist(P[i-1],P[i]));
+  const L = cum[cum.length-1];
+  function at(s){ let i=1; while(i<cum.length-1 && cum[i]<s) i++; const t=(s-cum[i-1])/(cum[i]-cum[i-1]||1); return [P[i-1][0]+(P[i][0]-P[i-1][0])*t, P[i-1][1]+(P[i][1]-P[i-1][1])*t]; }
+  function pos(d){ let s; if(closed){ s=((d%L)+L)%L; } else { s=d%(2*L); if(s>L) s=2*L-s; } return {ll:at(s), alt:altFn(s,L)}; }
+  return {L, pos, label};
+}
+const RIVER = [[37.5330,126.9185],[37.5300,126.9260],[37.5265,126.9330],[37.5225,126.9395],[37.5185,126.9455],[37.5150,126.9530],[37.5125,126.9610],[37.5110,126.9700],[37.5105,126.9790],[37.5110,126.9880],[37.5120,126.9960]];
+const riverAlt = s => 12 + 2.5*Math.sin(s/500) + 1.5*Math.sin(s/137);
+const ROUTES = {
+  yeouido: makePath(RIVER, false, riverAlt, '여의도 한강공원'),
+  banpo:   makePath([...RIVER].reverse(), false, (s,L)=>riverAlt(L-s), '반포 한강공원'),
+  olympic: makePath(ellipse([37.5205,127.1215], 700, 500, 28, 7), true, (s,L)=>36+8*Math.sin(2*Math.PI*s/L)+3*Math.sin(6*Math.PI*s/L), '올림픽공원'),
+  namsan:  makePath(ellipse([37.5512,126.9882], 900, 650, 32, 11), true, (s,L)=>170+55*Math.sin(2*Math.PI*s/L+1)+10*Math.sin(6*Math.PI*s/L), '남산 순환로'),
+};
+
+/* =====================================================================
+ * 2. 러닝 활동 목데이터 생성 (FIT 활동 + 스트림을 흉내)
+ * ===================================================================== */
+const TYPE_LABEL = {easy:'이지런', long:'롱런', tempo:'템포런', interval:'인터벌', race:'레이스'};
+const RACES = {
+  '2025-05-18':{dist:10000,name:'10K 레이스'},
+  '2025-11-02':{dist:21097.5,name:'하프 마라톤 대회'},
+  '2026-04-12':{dist:10000,name:'10K 레이스'},
+  '2026-06-14':{dist:5000,name:'5K 타임트라이얼'},
+  '2026-08-30':{dist:10000,name:'10K 레이스'},
+  '2026-09-20':{dist:21097.5,name:'하프 마라톤 대회'},
+};
+const BREAKS = [['2025-08-04','2025-08-17'],['2025-12-22','2026-01-04']];
+const TOTAL_MS = LAST_DAY - START;
+
+function makeRun(date, type, race){
+  const p = (date-START)/TOTAL_MS, mo = date.getMonth();
+  const heat = (mo===6||mo===7) ? 6 : (mo===5||mo===8) ? 3 : 0;
+  const easyPace = 400 - 52*p;
+  let pace, hrT, dist, route, hour;
+  switch(type){
+    case 'easy':  pace=easyPace+rr(-8,8); hrT=146-8*p+heat+rr(-3,3); dist=rr(5,9)*1000*(0.9+0.3*p); route=pick(['yeouido','banpo','olympic','olympic','namsan']); hour=pick([6,6,7,20,21]); break;
+    case 'long':  pace=easyPace+rr(5,15); hrT=144-8*p+heat+rr(-2,3); dist=(12+14*p+rr(-1.5,2.5))*1000; route=pick(['yeouido','banpo']); hour=7; break;
+    case 'tempo': pace=335-38*p+rr(-6,6); hrT=166-2*p+heat*.6+rr(-2,2); dist=rr(8,11)*1000; route='yeouido'; hour=pick([6,20]); break;
+    case 'interval': pace=345-35*p+rr(-6,6); hrT=160+heat*.5+rr(-2,2); dist=rr(7,9.5)*1000; route=pick(['olympic','yeouido']); hour=pick([6,20]); break;
+    case 'race': dist=race.dist; pace=(dist<=5000?285:dist<=10000?300:318)-30*p+rr(-3,3); hrT=dist>15000?170:174; route=dist>15000?'banpo':'yeouido'; hour=8; break;
+  }
+  if(route==='namsan'){ pace+=20; hrT+=4; }
+  if(ymd(date)==='2026-10-21'){ hour=19; }
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, Math.floor(rnd()*50));
+  const moving_s = Math.round(dist*pace/1000);
+  const r = {
+    id: 0, start, type, route, p, heat,
+    name: race ? race.name : `${ROUTES[route].label} ${TYPE_LABEL[type]}`,
+    distance: Math.round(dist), moving_s, elapsed_s: moving_s + Math.round(rr(30,300)),
+    hrT, cadT: 162 + 11*p + (easyPace-pace)/5 + rr(-3,3),
+    easyPace, drift: (type==='long'?rr(3,10):type==='race'?rr(4,8):rr(1,4)) + heat*0.6,
+  };
+  return r;
+}
+
+function genStreams(r, withLL){
+  const R = ROUTES[r.route], g = mulberry32(r.id*7919+13);
+  const n = Math.max(30, Math.round(r.moving_s/10));
+  const vB = r.distance/r.moving_s, raw = new Array(n);
+  let d = 0;
+  for(let i=0;i<n;i++){
+    const fr=i/n; let k=1;
+    if(r.type==='interval') k = (fr>0.15&&fr<0.88) ? (((i*10)%360)<240?1.14:0.78) : 0.88;
+    else if(r.type==='tempo') k = (fr<0.15||fr>0.9) ? 0.86 : 1.05;
+    else if(r.type==='race') k = fr>0.95 ? 1.08 : 1+0.03*(fr-0.5);
+    k *= 1 + 0.025*Math.sin(i/11+r.id) + (g()-.5)*0.05;
+    const gr = (R.pos(d+15).alt - R.pos(d).alt)/15;
+    k *= Math.max(0.6, 1-3.5*gr);
+    raw[i]=k; d += vB*k*10;
+  }
+  const scale = r.distance/d;
+  const time=[], dist=[], vel=[], alt=[], grade=[], hr=[], cad=[], ll = withLL?[]:null;
+  d = 0;
+  for(let i=0;i<=n;i++){
+    const v = vB*(raw[Math.min(i,n-1)])*scale;
+    time.push(i*10); dist.push(i===n ? r.distance : d); vel.push(v);
+    const p = R.pos(dist[i]); alt.push(p.alt); if(ll) ll.push(p.ll);
+    d += v*10;
+  }
+  const N = n+1;
+  for(let i=0;i<N;i++){ const a=Math.max(0,i-3), b=Math.min(N-1,i+3); grade.push((alt[b]-alt[a])/Math.max(1,dist[b]-dist[a])); }
+  const drift = r.drift;
+  let h = r.type==='race' ? 125 : 100;
+  for(let i=0;i<N;i++){
+    const target = r.hrT + (vel[i]/vB-1)*60 + grade[i]*150 + drift*(i/N-0.5);
+    h += (target-h)*0.07;
+    hr.push(Math.round(h + (g()-.5)*2));
+    cad.push(Math.round(r.cadT + (vel[i]/vB-1)*28 + (g()-.5)*3));
+  }
+  return {time, dist, vel, alt, grade, hr, cad, ll};
+}
+
+function bestEffort(s, D){
+  const n=s.dist.length; if(s.dist[n-1] < D) return null;
+  let best=Infinity, j=0;
+  for(let i=0;i<n;i++){
+    while(j<n && s.dist[j]-s.dist[i] < D) j++;
+    if(j>=n) break;
+    const t = s.time[j-1] + (s.dist[i]+D-s.dist[j-1])/((s.dist[j]-s.dist[j-1])||1)*10;
+    best = Math.min(best, t - s.time[i]);
+  }
+  return isFinite(best) ? best : null;
+}
+
+const PR_DISTS = [{k:'1k',d:1000,l:'1K'},{k:'5k',d:5000,l:'5K'},{k:'10k',d:10000,l:'10K'},{k:'half',d:21097.5,l:'하프'},{k:'full',d:42195,l:'풀'}];
+
+const RUNS = [];
+function generateMock(){
+  let id = 15000000000;
+  for(let d=new Date(START); d<=LAST_DAY; d=addDays(d,1)){
+    const key = ymd(d);
+    if(BREAKS.some(([a,b])=>key>=a && key<=b)) continue;
+    const dow = d.getDay(), p = (d-START)/TOTAL_MS;
+    let type = null;
+    if(RACES[key]) type='race';
+    else if(key==='2026-10-21') type='tempo';
+    else if(dow===2) type = rnd()<0.92?'easy':null;
+    else if(dow===4) type = rnd()<0.85?(rnd()<0.5?'tempo':'interval'):null;
+    else if(dow===6) type = rnd()<0.9?'long':null;
+    else if(dow===0) type = rnd()<0.55?'easy':null;
+    else if(dow===3) type = rnd()<0.35+0.3*p?'easy':null;
+    else if(dow===5) type = rnd()<0.12?'easy':null;
+    else rnd();
+    if(!type) continue;
+    const r = makeRun(new Date(d), type, RACES[key]);
+    r.id = (id += 1 + Math.floor(rnd()*900));
+    RUNS.push(r);
+  }
+  // 1차: 스트림 → 요약값
+  for(const r of RUNS){
+    const s = genStreams(r, false);
+    r.avg_hr = mean(s.hr); r.max_hr = Math.max(...s.hr); r.avg_cad = mean(s.cad);
+    r.speed = r.distance/r.moving_s;              // m/s
+    r.pace = r.moving_s/(r.distance/1000);        // s/km
+    r.stride = r.speed*60/r.avg_cad;              // m
+    r.ef = (r.speed*60)/r.avg_hr;
+    let gain=0; for(let i=1;i<s.alt.length;i++){ const dd=s.alt[i]-s.alt[i-1]; if(dd>0) gain+=dd; } r.elev_gain=gain;
+    if(r.moving_s>=3600){
+      const h=Math.floor(s.time.length/2);
+      const ef1 = (s.dist[h]/s.time[h]*60)/mean(s.hr.slice(0,h));
+      const ef2 = ((s.dist[s.dist.length-1]-s.dist[h])/(s.time[s.time.length-1]-s.time[h])*60)/mean(s.hr.slice(h));
+      r.decoupling = (ef1-ef2)/ef1*100;
+    }
+    r.best = {}; for(const pd of PR_DISTS){ const b=bestEffort(s,pd.d); if(b) r.best[pd.k]=b; }
+    r._hr = s.hr;
+    // 경로 요약 (시작/종료 200m 트리밍)
+    const R=ROUTES[r.route], poly=[];
+    for(let x=SETTINGS.privacy_radius_m; x<=r.distance-SETTINGS.privacy_radius_m; x+=50) poly.push(R.pos(x).ll);
+    r.poly = poly;
+    const hard = r.type==='race' || ((r.type==='tempo'||r.type==='interval') && r.start>=new Date(2026,2,1));
+    r.gear = hard ? 'race' : r.start < new Date(2025,6,1) ? 'shoeA' : r.start < new Date(2026,3,1) ? 'shoeB' : 'shoeC';
+    if(SHOW_DYNAMICS){ const g=mulberry32(r.id); r.gct = 258-14*r.p-(r.easyPace-r.pace)/4+(g()-.5)*6; r.vr = 8.7-0.7*r.p-(r.easyPace-r.pace)/120+(g()-.5)*0.3; }
+  }
+  // 최대 심박 자동 추정 (최근 365일 최고값)
+  const yearAgo = addDays(NOW,-365);
+  const maxHr = SETTINGS.max_hr || Math.max(...RUNS.filter(r=>r.start>=yearAgo).map(r=>r.max_hr));
+  SETTINGS.max_hr_eff = maxHr;
+  const zb = [0.6,0.7,0.8,0.9].map(x=>x*maxHr);
+  for(const r of RUNS){
+    const z=[0,0,0,0,0]; for(const h of r._hr){ let k=0; while(k<4 && h>=zb[k]) k++; z[k]+=10; } r.zones=z; delete r._hr;
+    const HRr = clamp((r.avg_hr-SETTINGS.resting_hr)/(maxHr-SETTINGS.resting_hr),0,1);
+    r.trimp = r.moving_s/60*HRr*0.64*Math.exp(1.92*HRr);
+  }
+}
+let RUN_BY_ID = new Map();
+
+/* =====================================================================
+ * 3. 집계 (Supabase 뷰 v_weekly / v_daily_load / v_pr_timeline / v_calendar 역할)
+ * ===================================================================== */
+function vdot(D, t){ const tm=t/60, v=D/tm; const vo2=-4.60+0.182258*v+0.000104*v*v; const pct=0.8+0.1894393*Math.exp(-0.012778*tm)+0.2989558*Math.exp(-0.1932605*tm); return vo2/pct; }
+function aggregate(){
+DAY = new Map();       // ymd → {m, runs[], trimp}
+for(const r of RUNS){ const k=ymd(r.start); if(!DAY.has(k)) DAY.set(k,{m:0,runs:[],trimp:0}); const o=DAY.get(k); o.m+=r.distance; o.runs.push(r); o.trimp+=r.trimp; }
+
+WEEKS = [];
+for(let w=weekStart(START); w<=NOW; w=addDays(w,7)) WEEKS.push({start:w, key:ymd(w), m:0, s:0, n:0, efW:0, efM:0, cadW:0, cadS:0, strideW:0, strideS:0, zones:[0,0,0,0,0], gct:[], vr:[]});
+WEEK_BY_KEY = new Map(WEEKS.map(w=>[w.key,w]));
+for(const r of RUNS){
+  const w = WEEK_BY_KEY.get(ymd(weekStart(r.start)));
+  w.m+=r.distance; w.s+=r.moving_s; w.n++;
+  if(r.ef!=null){ w.efW+=r.ef*r.distance; w.efM+=r.distance; }
+  if(r.avg_cad!=null){ w.cadW+=r.avg_cad*r.moving_s; w.cadS+=r.moving_s; }
+  if(r.stride!=null){ w.strideW+=r.stride*r.moving_s; w.strideS+=r.moving_s; }
+  r.zones.forEach((z,i)=>w.zones[i]+=z);
+  if(r.gct){ w.gct.push(r.gct); w.vr.push(r.vr); }
+}
+WEEKS.forEach((w,i)=>{ w.ef = w.efM? w.efW/w.efM : null; w.cad = w.cadS? w.cadW/w.cadS : null; w.stride = w.strideS? w.strideW/w.strideS : null;
+  const win = WEEKS.slice(Math.max(0,i-3), i+1); w.ma4 = mean(win.map(x=>x.m));
+});
+
+LOAD = [];             // 일별 부하
+for(let d=dayStart(START); d<=NOW; d=addDays(d,1)) LOAD.push({d:new Date(d), key:ymd(d), t:(DAY.get(ymd(d))||{}).trimp||0});
+LOAD.forEach((x,i)=>{ let a=0,c=0; for(let j=Math.max(0,i-27);j<=i;j++){ c+=LOAD[j].t; if(j>i-7) a+=LOAD[j].t; } x.acute=a; x.chronic=c/4; x.acwr = i>=27 && x.chronic>0 ? a/x.chronic : null; });
+
+WEEKS.forEach(w=>{
+  const end = addDays(w.start,7), from = addDays(end,-90); let best=null;
+  for(const r of RUNS){ if(r.start<from||r.start>=end) continue; for(const k of ['5k','10k','half']){ if(r.best[k]){ const pd=PR_DISTS.find(x=>x.k===k); const v=vdot(pd.d,r.best[k]); if(best===null||v>best) best=v; } } }
+  w.vdot = best;
+});
+
+// PR 타임라인
+PR = {};
+for(const pd of PR_DISTS){
+  let best=null; const tl=[];
+  for(const r of RUNS){ const t=r.best[pd.k]; if(t && (best===null || t<best.t)){ best={t, run:r}; tl.push({t, run:r}); } }
+  PR[pd.k] = {best, tl};
+}
+}
+let DAY, WEEKS, WEEK_BY_KEY, LOAD, PR;
+
+/* =====================================================================
+ * 4. ECharts 공통
+ * ===================================================================== */
+const charts = {};
+const FONT = 'Pretendard, -apple-system, sans-serif';
+function mount(id, opt){ const el=document.getElementById(id); if(!el || el.offsetParent===null) return null; let c=charts[id]; if(!c){ c=echarts.init(el,null,{renderer:'canvas'}); charts[id]=c; new ResizeObserver(()=>c.resize()).observe(el); } c.setOption(opt,true); return c; }
+function base(){
+  const ink=C('--ink'), ink2=C('--ink-2'), line=C('--line');
+  return {
+    animationDuration:300,
+    textStyle:{fontFamily:FONT,color:ink2,fontSize:11},
+    grid:{left:46,right:14,top:14,bottom:26},
+    tooltip:{trigger:'axis', confine:true, backgroundColor:C('--card'), borderColor:line, borderWidth:1, padding:[8,10], textStyle:{color:ink,fontSize:12,fontFamily:FONT},
+      extraCssText:'box-shadow:0 6px 20px rgba(0,0,0,.14);border-radius:10px;', axisPointer:{type:'line',lineStyle:{color:ink2,width:1}}},
+  };
+}
+const ax = (o={}) => ({axisLine:{lineStyle:{color:C('--line')}}, axisTick:{show:false}, splitLine:{show:false}, ...o, axisLabel:{color:C('--ink-2'),fontSize:11,hideOverlap:true,...(o.axisLabel||{})}});
+const ay = (o={}) => ({axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:C('--line')}}, ...o, axisLabel:{color:C('--ink-2'),fontSize:11,hideOverlap:true,...(o.axisLabel||{})}});
+function tip(title, rows){ return `<div class="tt-t">${esc(title)}</div>` + rows.map(r=>`<div class="tt-r">${r.c?`<i class="tt-k" style="background:${r.c}"></i>`:''}<b>${esc(r.v)}</b><span>${esc(r.l)}</span></div>`).join(''); }
+const md = d => `${d.getMonth()+1}/${d.getDate()}`;
+const SEQ = () => ['--q0','--q1','--q2','--q3','--q4'].map(C);
+const ICON = {
+  ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>',
+};
+const chip = (cls, icon, text) => `<span class="chip ${cls}">${ICON[icon]||''}${esc(text)}</span>`;
+function acwrState(v){ if(v==null) return {cls:'mute',icon:'',t:'데이터 부족'}; if(v<0.8) return {cls:'info',icon:'down',t:'낮음'}; if(v<=1.3) return {cls:'good',icon:'ok',t:'적정'}; if(v<=1.5) return {cls:'warn',icon:'warn',t:'주의'}; return {cls:'bad',icon:'warn',t:'위험'}; }
+
+/* =====================================================================
+ * 5.1 Hero
+ * ===================================================================== */
+function sparkline(vals, w=90, h=28){
+  const v=vals.filter(x=>x!=null), mn=Math.min(...v), mx=Math.max(...v);
+  const pts=v.map((x,i)=>`${(i/(v.length-1)*w).toFixed(1)},${(h-2-(x-mn)/((mx-mn)||1)*(h-4)).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function ring(frac, size=44, stroke=5, color='#fff'){
+  const r=(size-stroke)/2, c=2*Math.PI*r, f=clamp(frac,0,1);
+  return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${(c*f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;
+}
+function streaks(){
+  const cur = weekStart(NOW); let i = WEEKS.findIndex(w=>w.key===ymd(cur));
+  if(i<0) return {cur:0, best:0, days2026:0};
+  if(WEEKS[i].n===0) i--;
+  let s=0; while(i>=0 && WEEKS[i].n>0){ s++; i--; }
+  let best=0, run=0; for(const w of WEEKS){ run = w.n>0 ? run+1 : 0; best=Math.max(best,run); }
+  const days2026 = [...DAY.keys()].filter(k=>k.startsWith(String(NOW.getFullYear()))).length;
+  return {cur:s, best, days2026};
+}
+function recoveryState(){
+  const last = RUNS[RUNS.length-1];
+  const end = new Date(+last.start + last.elapsed_s*1000);
+  const need = clamp(last.trimp*0.22+6, 6, 72);
+  const left = Math.max(0, need - (NOW-end)/3.6e6);
+  return {last, need, left};
+}
+function renderHero(){
+  document.getElementById('hero-date').textContent = `${NOW.getFullYear()}년 ${NOW.getMonth()+1}월 ${NOW.getDate()}일 (${DOW[NOW.getDay()]}) ${pad(NOW.getHours())}:${pad(NOW.getMinutes())} 기준`;
+  const sy = MODE==='real' ? SYNC_AT : NOW;
+  document.getElementById('sync-at').textContent = sy ? `${MODE==='real'?'가져오기':'동기화'} ${md(sy)} ${pad(sy.getHours())}:${pad(sy.getMinutes())}` : '가져오기 기록 없음';
+  const ws = weekStart(NOW), lws = addDays(ws,-7), elapsedDays = Math.floor((dayStart(NOW)-ws)/864e5)+1;
+  const sumRange = (a,b) => RUNS.filter(r=>r.start>=a && r.start<b).reduce((s,r)=>s+r.distance,0);
+  const thisW = sumRange(ws, NOW), lastWSame = sumRange(lws, addDays(lws,elapsedDays));
+  const ms = new Date(NOW.getFullYear(), NOW.getMonth(), 1), pms = new Date(NOW.getFullYear(), NOW.getMonth()-1, 1);
+  const thisM = sumRange(ms, NOW), lastMSame = sumRange(pms, addDays(pms, NOW.getDate()));
+  const st = streaks();
+  const gv = GARMIN.filter(g=>g.vo2max!=null);
+  const vd = gv.length>1 ? gv.slice(-26).map(g=>+g.vo2max) : WEEKS.slice(-26).map(w=>w.vdot).filter(v=>v!=null);
+  const vNow = gv.length ? +lastOf(gv).vo2max : lastOf(WEEKS).vdot;
+  const v30 = gv.length>1 ? +(gv.filter(g=>new Date(g.date)<=addDays(NOW,-30)).pop()||gv[0]).vo2max : (WEEKS[Math.max(0,WEEKS.length-5)].vdot);
+  const vTag = gv.length ? '가민' : '추정';
+  const L = lastOf(LOAD), A = acwrState(L.acwr);
+  const rec = recoveryState();
+  const pct = (a,b)=> b ? Math.round((a-b)/b*100) : 0;
+  const sign = x => (x>0?'+':'')+x;
+  const tiles = [
+    `<div class="kpi"><div class="lab">이번 주 거리</div><div class="mini"><div><div class="val num">${f1(km(thisW))}<small>km</small></div><div class="delta num">지난주 같은 기간 ${f1(km(lastWSame))}km (${sign(pct(thisW,lastWSame))}%)</div></div></div><div class="mini">${ring(km(thisW)/SETTINGS.weekly_goal_km,30,4)}<span class="delta num">주간 목표 ${SETTINGS.weekly_goal_km}km의 ${Math.round(km(thisW)/SETTINGS.weekly_goal_km*100)}%</span></div></div>`,
+    `<div class="kpi"><div class="lab">이번 달 거리</div><div class="val num">${f1(km(thisM))}<small>km</small></div><div class="delta num">지난달 같은 기간 대비 ${sign(pct(thisM,lastMSame))}%</div></div>`,
+    `<div class="kpi"><div class="lab">연속 러닝 주</div><div class="val num">${st.cur}<small>주</small></div><div class="delta num">최장 ${st.best}주 · 올해 ${st.days2026}일 달림</div></div>`,
+    `<div class="kpi"><div class="lab">VO2max <span class="tag">${vTag}</span></div><div class="val num">${fx(vNow)}</div><div class="mini">${vd.length>1?sparkline(vd):''}<span class="delta num">30일 ${vNow!=null&&v30!=null?sign(f1(vNow-v30)):'—'}</span></div></div>`,
+    `<div class="kpi"><div class="lab">급성 부하 · ACWR <span class="tag">추정</span></div><div class="val num">${Math.round(L.acute)}</div><div class="mini">${chip(A.cls,A.icon,A.t)}<span class="delta num">ACWR ${fx(L.acwr,2)}</span></div></div>`,
+    `<div class="kpi"><div class="lab">회복 <span class="tag">추정</span></div><div class="mini">${ring(1-rec.left/rec.need,44,5)}<div><div class="val num">${Math.round(rec.left)}<small>시간</small></div><div class="delta">${rec.left<1?'고강도 가능':'후 고강도 가능'}</div></div></div></div>`,
+  ];
+  document.getElementById('kpis').innerHTML = tiles.join('');
+
+  // 규칙 기반 코멘트
+  const c = [];
+  const avg4 = mean(WEEKS.slice(-5,-1).map(w=>w.m));
+  const lastFull = WEEKS[WEEKS.length-2];
+  if(lastFull && isFinite(avg4)){
+    const diff = pct(lastFull.m, avg4);
+    c.push(`지난주 <b>${f1(km(lastFull.m))}km</b>, 직전 4주 평균보다 ${Math.abs(diff)}% ${diff>=0?'많아요':'적어요'}.`);
+  } else c.push(`기록이 ${RUNS.length}회 쌓였어요. 몇 주 더 쌓이면 지난주와 비교해 드릴게요.`);
+  if(L.acwr==null) c.push('ACWR은 28일 이상의 기록이 쌓이면 계산돼요.');
+  else if(L.acwr>1.3) c.push(`ACWR <b>${L.acwr.toFixed(2)}</b> — 부하가 빠르게 늘었어요. 이번 주는 강도를 낮추는 것을 권장해요.`);
+  else if(L.acwr<0.8) c.push(`ACWR <b>${L.acwr.toFixed(2)}</b> — 최근 훈련량이 평소보다 적어요.`);
+  else c.push(`ACWR <b>${L.acwr.toFixed(2)}</b> — 부하가 적정 범위에 있어요.`);
+  const recentPR = PR_DISTS.map(pd=>PR[pd.k].best).filter(b=>b && (NOW-b.run.start)<30*864e5);
+  if(recentPR.length) c.push(`최근 30일 안에 PR을 ${recentPR.length}개 갱신했어요.`);
+  const cad4 = mean(WEEKS.slice(-4).filter(w=>w.cad).map(w=>w.cad));
+  if(isFinite(cad4)) c.push(`최근 4주 평균 케이던스 <b>${Math.round(cad4)}spm</b> — 목표 ${SETTINGS.target_cadence}까지 ${Math.max(0,Math.round(SETTINGS.target_cadence-cad4))}spm 남았어요.`);
+  document.getElementById('hero-comment').innerHTML = c.map(x=>`<li>${x}</li>`).join('');
+}
+
+/* =====================================================================
+ * 5.2 꾸준함
+ * ===================================================================== */
+function heatLevel(m){ const k=m/1000; return k<=0?0:k<6?1:k<10?2:k<16?3:4; }
+function renderCalHeat(){
+  const end = dayStart(NOW), start = addDays(end,-364);
+  const data = []; for(let d=new Date(start); d<=end; d=addDays(d,1)){ const o=DAY.get(ymd(d)); data.push([ymd(d), o? +(o.m/1000).toFixed(1) : 0]); }
+  const seq = SEQ();
+  const st = streaks();
+  document.getElementById('streak-stats').innerHTML =
+    `<div class="stat"><div class="v num">${st.cur}<small>주</small></div><div class="l">현재 연속</div></div>`+
+    `<div class="stat"><div class="v num">${st.best}<small>주</small></div><div class="l">최장 연속</div></div>`+
+    `<div class="stat"><div class="v num">${st.days2026}<small>일</small></div><div class="l">올해 달린 날</div></div>`;
+  document.getElementById('heat-legend').innerHTML = `적음 ${seq.map(c=>`<i style="background:${c}"></i>`).join('')} 많음 <span style="margin-left:8px">(0 · 6 · 10 · 16km+)</span>`;
+  const c = mount('c-calheat', {
+    ...base(),
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ const o=DAY.get(p.data[0]); const d=new Date(p.data[0]+'T00:00'); if(!o) return tip(`${md(d)} (${DOW[d.getDay()]})`,[{v:'휴식',l:''}]); return tip(`${md(d)} (${DOW[d.getDay()]})`, o.runs.map(r=>({v:`${f1(km(r.distance))}km`, l:`${r.name} · ${fmtPace(r.pace)}/km`}))); }},
+    visualMap:{show:false, type:'piecewise', dimension:1, pieces:[{value:0,color:seq[0]},{gt:0,lt:6,color:seq[1]},{gte:6,lt:10,color:seq[2]},{gte:10,lt:16,color:seq[3]},{gte:16,color:seq[4]}]},
+    calendar:{ range:[ymd(start), ymd(end)], top:22, left:30, right:6, bottom:4, cellSize:['auto',15], splitLine:{show:false},
+      itemStyle:{color:seq[0], borderColor:C('--card'), borderWidth:3}, yearLabel:{show:false},
+      dayLabel:{firstDay:1, nameMap:DOW, color:C('--ink-2'), fontSize:10, margin:6}, monthLabel:{nameMap:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'], color:C('--ink-2'), fontSize:11} },
+    series:[{type:'heatmap', coordinateSystem:'calendar', data, emphasis:{itemStyle:{borderColor:C('--ink'),borderWidth:1}}}],
+  });
+  if(c && !c._bound){ c._bound=true; c.on('click', p=>{ const o=DAY.get(p.data[0]); if(o) openDrawer(o.runs[0]); }); }
+}
+
+let calMonth = new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+function thumb(poly){
+  if(!poly || poly.length<2) return '';
+  let a=Infinity,b=-Infinity,c=Infinity,d=-Infinity; for(const [la,ln] of poly){ a=Math.min(a,la); b=Math.max(b,la); c=Math.min(c,ln); d=Math.max(d,ln); }
+  const w=(d-c)*M_LNG, h=(b-a)*M_LAT, s=36/Math.max(w,h,1), ox=(40-w*s)/2, oy=(40-h*s)/2;
+  const step=Math.max(1,Math.floor(poly.length/60));
+  const pts=poly.filter((_,i)=>i%step===0).map(([la,ln])=>`${(ox+(ln-c)*M_LNG*s).toFixed(1)},${(oy+(b-la)*M_LAT*s).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${C('--s1')}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function renderMonthCal(){
+  const y=calMonth.getFullYear(), m=calMonth.getMonth();
+  document.getElementById('m-label').textContent = `${y}년 ${m+1}월`;
+  const first = new Date(y,m,1), gridStart = weekStart(first), last = new Date(y,m+1,0);
+  let html = ['월','화','수','목','금','토','일'].map(x=>`<div class="cal-dow">${x}</div>`).join('');
+  let tot=0, cnt=0;
+  for(let d=new Date(gridStart); d<=addDays(weekStart(last),6); d=addDays(d,1)){
+    const k=ymd(d), o=DAY.get(k), inM=d.getMonth()===m, today=k===ymd(NOW);
+    if(o && inM){ tot+=o.m; cnt+=o.runs.length; }
+    const lab = o ? `${md(d)} ${f1(km(o.m))}km` : `${md(d)} 휴식`;
+    html += `<div class="cal-day${inM?'':' out'}${o?' run':''}${today?' today':''}" ${o?`role="button" tabindex="0" data-run="${o.runs[0].id}"`:''} aria-label="${esc(lab)}"><span class="d num">${d.getDate()}</span>${o?thumb(o.runs[0].poly):''}${o?`<span class="km num">${f1(km(o.m))}</span>`:''}</div>`;
+  }
+  const el = document.getElementById('month-cal'); el.innerHTML = html;
+  document.getElementById('month-sum').textContent = `${cnt}회 · ${f1(km(tot))}km`;
+  document.getElementById('m-next').disabled = (y===NOW.getFullYear() && m===NOW.getMonth());
+  document.getElementById('m-prev').disabled = calMonth <= new Date(START.getFullYear(), START.getMonth(), 1);
+}
+
+function renderPunch(){
+  const hours=[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
+  const rows=['월','화','수','목','금','토','일'], cnt={};
+  for(const r of RUNS){ const dw=(r.start.getDay()+6)%7, h=clamp(r.start.getHours(),5,22); const k=dw+'_'+h; cnt[k]=(cnt[k]||0)+1; }
+  const data=[]; let mx=0; rows.forEach((_,i)=>hours.forEach((h,j)=>{ const v=cnt[i+'_'+h]||0; mx=Math.max(mx,v); data.push([j,i,v]); }));
+  const seq=SEQ();
+  mount('c-punch', {...base(), grid:{left:30,right:8,top:8,bottom:24},
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>tip(`${rows[p.data[1]]}요일 ${hours[p.data[0]]}시대`,[{v:`${p.data[2]}회`,l:'러닝'}])},
+    xAxis:ax({type:'category', data:hours.map(h=>h+'시'), axisLine:{show:false}, axisLabel:{color:C('--ink-2'),fontSize:10,interval:2}}),
+    yAxis:{type:'category', data:rows, inverse:true, axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:C('--ink-2'),fontSize:11}},
+    visualMap:{show:false, min:0, max:mx, inRange:{color:seq}},
+    series:[{type:'heatmap', data, itemStyle:{borderColor:C('--card'),borderWidth:2,borderRadius:3}, emphasis:{itemStyle:{borderColor:C('--ink'),borderWidth:1}}}],
+  });
+}
+
+function renderYoY(){
+  const mk = (yr, shift) => { let cum=0; const out=[]; for(let d=new Date(yr,0,1); d<=(yr===2026?dayStart(NOW):new Date(yr,11,31)); d=addDays(d,1)){ const o=DAY.get(ymd(d)); cum+=o?o.m:0; out.push([+new Date(2026,d.getMonth(),d.getDate()), +(cum/1000).toFixed(1)]); } return out; };
+  const a=mk(2026), b=mk(2025);
+  const same = b[a.length-1][1], now = a[a.length-1][1];
+  document.getElementById('yoy-sub').textContent = `오늘 기준 ${f1(now)}km · 작년 같은 날 ${f1(same)}km (${now>=same?'+':''}${f1(now-same)}km)`;
+  mount('c-yoy', {...base(), grid:{left:44,right:46,top:14,bottom:26},
+    tooltip:{...base().tooltip, formatter:ps=>{ const d=new Date(ps[0].value[0]); return tip(`${d.getMonth()+1}월 ${d.getDate()}일까지 누적`, ps.map(p=>({c:p.color, v:`${f1(p.value[1])}km`, l:p.seriesName}))); }},
+    xAxis:ax({type:'time', axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>`${new Date(v).getMonth()+1}월`}, splitNumber:6}),
+    yAxis:ay({type:'value', axisLabel:{color:C('--ink-2'),fontSize:11,formatter:'{value}'}}),
+    series:[
+      {name:'2026', type:'line', data:a, showSymbol:false, lineStyle:{width:2,color:C('--s1')}, itemStyle:{color:C('--s1')}, endLabel:{show:true, formatter:'2026', color:C('--ink-2'), fontSize:11}},
+      {name:'2025', type:'line', data:b, showSymbol:false, lineStyle:{width:2,color:C('--s2')}, itemStyle:{color:C('--s2')}, endLabel:{show:true, formatter:'2025', color:C('--ink-2'), fontSize:11}},
+    ],
+  });
+}
+
+/* =====================================================================
+ * 5.7 최고 기록
+ * ===================================================================== */
+let prTab = '5k';
+function renderPR(){
+  document.getElementById('pr-cards').innerHTML = PR_DISTS.map(pd=>{
+    const b = PR[pd.k].best;
+    if(!b) return `<div class="pr empty"><div class="d">${pd.l}</div><div class="t">—</div><div class="p">아직 기록이 없어요</div></div>`;
+    const isNew = (NOW-b.run.start) < 30*864e5;
+    return `<div class="pr">${isNew?'<span class="new">NEW</span>':''}<div class="d">${pd.l}</div><div class="t num">${fmtDur(b.t)}</div><div class="p num">${fmtPace(b.t/(pd.d/1000))}/km · ${b.run.start.getFullYear()}.${md(b.run.start)}</div><button class="link" data-run="${b.run.id}">${esc(b.run.name)} 보기 ›</button></div>`;
+  }).join('');
+  document.getElementById('pr-tabs').innerHTML = PR_DISTS.filter(pd=>PR[pd.k].best).map(pd=>`<button class="tab" role="tab" aria-selected="${pd.k===prTab}" data-k="${pd.k}">${pd.l}</button>`).join('');
+  if(!PR[prTab].best){ const f=PR_DISTS.find(x=>PR[x.k].best); if(f) prTab=f.k; }
+  const tl = PR[prTab].tl, pd = PR_DISTS.find(x=>x.k===prTab);
+  const data = tl.map(x=>({value:[+x.run.start, Math.round(x.t)], run:x.run}));
+  if(data.length) data.push({value:[+NOW, data[data.length-1].value[1]], run:null, symbol:'none'});
+  const c = mount('c-prline', {...base(), grid:{left:56,right:16,top:14,bottom:26},
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ const r=p.data.run; if(!r) return ''; return tip(`${r.start.getFullYear()}.${md(r.start)} · ${r.name}`,[{v:fmtDur(p.data.value[1]), l:`${pd.l} · ${fmtPace(p.data.value[1]/(pd.d/1000))}/km`}]); }},
+    xAxis:ax({type:'time', axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>{const d=new Date(v);return d.getMonth()===0?`${d.getFullYear()}`:`${d.getMonth()+1}월`;}}}),
+    yAxis:ay({type:'value', inverse:true, scale:true, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>fmtDur(v)}}),
+    series:[{type:'line', step:'end', data, symbol:'circle', symbolSize:9, lineStyle:{width:2,color:C('--s1')}, itemStyle:{color:C('--s1'),borderColor:C('--card'),borderWidth:2}}],
+  });
+  if(c && !c._bound){ c._bound=true; c.on('click', p=>{ if(p.data && p.data.run) openDrawer(p.data.run); }); }
+
+  const shoeDefs = MODE==='real'
+    ? GEAR.map(g=>({k:g.id, n:g.name, since:'', retired:g.retired, base:+g.distance_m||0}))
+    : [
+    {k:'shoeC', n:'데일리 러닝화 C', since:'2026.04~'},
+    {k:'race',  n:'카본 레이싱화', since:'레이스 · 2026.03~ 스피드 훈련'},
+    {k:'shoeB', n:'데일리 러닝화 B', since:'2025.07–2026.03', retired:true},
+    {k:'shoeA', n:'데일리 러닝화 A', since:'~2025.06', retired:true},
+  ];
+  if(!shoeDefs.length){ document.getElementById('shoes').innerHTML = '<p class="sub" style="margin:0">등록된 신발이 없어요. Supabase <b>gear</b> 테이블에 신발을 추가하고, 활동의 <b>gear_id</b>에 지정하면 누적 거리가 표시돼요.</p>'; return; }
+  const shoes = shoeDefs.map(s=>({...s, m:Math.max(s.base||0, RUNS.filter(r=>r.gear===s.k).reduce((a,r)=>a+r.distance,0))}));
+  const mx = Math.max(900, ...shoes.map(s=>km(s.m)));
+  document.getElementById('shoes').innerHTML = shoes.map(s=>{ const k=km(s.m), st = s.retired?chip('mute','','은퇴'):k>=800?chip('bad','warn','교체 필요'):k>=600?chip('warn','warn','교체 권장'):chip('good','ok','양호');
+    return `<div class="shoe"><div class="top"><b>${esc(s.n)}</b><span class="num">${Math.round(k)}km</span></div><div class="bar"><i style="width:${clamp(k/mx*100,0,100)}%"></i><b style="left:${600/mx*100}%"></b></div><div class="meta">${s.since?esc(s.since)+' · ':''}${st}</div></div>`; }).join('');
+}
+
+/* =====================================================================
+ * 기간 필터
+ * ===================================================================== */
+let periodW = 12;
+function periodWeeks(){ return periodW ? WEEKS.slice(-periodW) : WEEKS; }
+function periodRuns(){ const s=periodWeeks()[0].start; return RUNS.filter(r=>r.start>=s); }
+
+/* 5.3 훈련량 */
+function renderVolume(){
+  const W = periodWeeks(), R = periodRuns();
+  const s=W[0].start, e=addDays(W[W.length-1].start,6);
+  document.getElementById('period-range').textContent = `${s.getFullYear()}.${md(s)} – ${e.getFullYear()}.${md(e)} · ${W.length}주`;
+  document.getElementById('vol-sub').textContent = `${R.length}회 · ${f1(km(R.reduce((a,r)=>a+r.distance,0)))}km · ${fmtDur(R.reduce((a,r)=>a+r.moving_s,0))}`;
+  const full = W.slice(0,-1).filter(w=>w.n>0);
+  document.getElementById('vol-stats').innerHTML =
+    `<div class="stat"><div class="v num">${f1(km(mean(W.slice(0,-1).map(w=>w.m))||0))}<small>km</small></div><div class="l">주 평균</div></div>`+
+    `<div class="stat"><div class="v num">${f1(km(Math.max(...W.map(w=>w.m))))}<small>km</small></div><div class="l">최다 주</div></div>`+
+    `<div class="stat"><div class="v num">${(mean(full.map(w=>w.n))||0).toFixed(1)}<small>회</small></div><div class="l">주 평균 횟수</div></div>`;
+  const cats = W.map(w=>md(w.start));
+  mount('c-weekly', {...base(),
+    tooltip:{...base().tooltip, formatter:ps=>{ const w=W[ps[0].dataIndex]; return tip(`${w.start.getFullYear()}.${md(w.start)} 주${w===WEEKS[WEEKS.length-1]?' (진행 중)':''}`, [
+      {c:C('--s1'), v:`${f1(km(w.m))}km`, l:`주간 거리 · ${w.n}회 · ${fmtDur(w.s)}`},
+      {c:C('--s2'), v:`${f1(km(w.ma4))}km`, l:'4주 이동평균'}]); }},
+    xAxis:ax({type:'category', data:cats}),
+    yAxis:ay({type:'value', axisLabel:{color:C('--ink-2'),fontSize:11,formatter:'{value}km'}}),
+    series:[
+      {name:'주간 거리', type:'bar', data:W.map(w=>+(w.m/1000).toFixed(1)), barMaxWidth:22, itemStyle:{color:C('--s1'),borderRadius:[4,4,0,0]}, emphasis:{itemStyle:{opacity:.8}}},
+      {name:'4주 이동평균', type:'line', data:W.map(w=>+(w.ma4/1000).toFixed(1)), showSymbol:false, smooth:.3, lineStyle:{width:2,color:C('--s2')}, itemStyle:{color:C('--s2')}},
+    ],
+  });
+}
+
+/* 5.4 효율 */
+function renderEfficiency(){
+  const W = periodWeeks(), R = periodRuns().filter(r=>r.type!=='race');
+  // EF
+  const pts = R.filter(r=>r.ef!=null).map(r=>({value:[+r.start, +r.ef.toFixed(3)], run:r}));
+  const ma = W.map((w,i)=>{ const win=WEEKS.slice(Math.max(0,WEEKS.indexOf(w)-3), WEEKS.indexOf(w)+1); let m=0,e=0; win.forEach(x=>{m+=x.m;e+=x.efW;}); return [+addDays(w.start,3), m? +(e/m).toFixed(3):null]; });
+  const first = ma.find(x=>x[1]!=null), last=[...ma].reverse().find(x=>x[1]!=null);
+  const dEF = last && first ? (last[1]-first[1])/first[1]*100 : 0;
+  document.getElementById('ef-chip').innerHTML = dEF>=1 ? chip('good','up',`기간 내 +${dEF.toFixed(1)}%`) : dEF<=-1 ? chip('warn','down',`기간 내 ${dEF.toFixed(1)}%`) : chip('mute','','변화 없음');
+  const c1 = mount('c-ef', {...base(),
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ if(p.seriesIndex===1) return tip(`${md(new Date(p.value[0]))} 주 4주 평균`,[{c:C('--s1'),v:p.value[1].toFixed(2),l:'EF'}]); const r=p.data.run; return tip(`${md(r.start)} · ${r.name}`,[{v:r.ef.toFixed(2),l:'EF (m/박동)'},{v:`${fmtPace(r.pace)}/km`,l:'페이스'},{v:`${Math.round(r.avg_hr)}bpm`,l:'평균 심박'}]); }},
+    xAxis:ax({type:'time', axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>md(new Date(v))}}),
+    yAxis:ay({type:'value', scale:true, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>v.toFixed(2)}}),
+    series:[
+      {type:'scatter', data:pts, symbolSize:8, itemStyle:{color:C('--s1'),opacity:.35}},
+      {type:'line', data:ma, showSymbol:false, smooth:.3, connectNulls:true, lineStyle:{width:2.5,color:C('--s1')}},
+    ],
+  });
+  if(c1 && !c1._bound){ c1._bound=true; c1.on('click', p=>{ if(p.data && p.data.run) openDrawer(p.data.run); }); }
+
+  // 페이스–심박 산점도
+  const E = R.filter(r=>(r.type==='easy'||r.type==='long') && r.avg_hr!=null);
+  const t0 = +W[0].start, t1 = +NOW;
+  const seq = SEQ();
+  document.getElementById('pacehr-legend').innerHTML = `<span>오래된 기록</span><span style="display:inline-block;width:80px;height:8px;border-radius:4px;background:linear-gradient(90deg,${seq[1]},${seq[4]})"></span><span>최근 기록</span>`;
+  const c2 = mount('c-pacehr', {...base(), grid:{left:46,right:14,top:14,bottom:44},
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ const r=p.data.run; return tip(`${md(r.start)} · ${r.name}`,[{v:`${fmtPace(r.pace)}/km`,l:'페이스'},{v:`${Math.round(r.avg_hr)}bpm`,l:'평균 심박'}]); }},
+    xAxis:ax({type:'value', scale:true, inverse:true, name:'페이스 (빠름 →)', nameLocation:'middle', nameGap:30, nameTextStyle:{color:C('--ink-2'),fontSize:11}, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>fmtPace(v)}, splitLine:{show:false}}),
+    yAxis:ay({type:'value', scale:true, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:'{value}'}}),
+    visualMap:{show:false, dimension:2, min:t0, max:t1, inRange:{color:[seq[1],seq[4]]}},
+    series:[{type:'scatter', data:E.map(r=>({value:[Math.round(r.pace), Math.round(r.avg_hr), +r.start], run:r})), symbolSize:10, itemStyle:{borderColor:C('--card'),borderWidth:1.5}}],
+  });
+  if(c2 && !c2._bound){ c2._bound=true; c2.on('click', p=>{ if(p.data && p.data.run) openDrawer(p.data.run); }); }
+
+  // 존 분포
+  const zn = ['Z1','Z2','Z3','Z4','Z5'], mh=SETTINGS.max_hr_eff;
+  const zr = [[0.5,0.6],[0.6,0.7],[0.7,0.8],[0.8,0.9],[0.9,1]].map(([a,b])=>`${Math.round(a*mh)}–${Math.round(b*mh)}`);
+  const zcol = ['--z1','--z2','--z3','--z4','--z5'].map(C);
+  const tot = W.reduce((a,w)=>a+w.zones.reduce((x,y)=>x+y,0),0), low = W.reduce((a,w)=>a+w.zones[0]+w.zones[1]+w.zones[2],0);
+  const lowPct = tot? Math.round(low/tot*100):0;
+  document.getElementById('zone-sub').textContent = `최대 심박 ${mh}bpm(최근 1년 최고값 자동 추정) 기준`;
+  document.getElementById('zone-chip').innerHTML = lowPct>=75 ? chip('good','ok',`저강도(Z1–3) ${lowPct}%`) : chip('warn','warn',`저강도(Z1–3) ${lowPct}% · 목표 80%`);
+  document.getElementById('zone-legend').innerHTML = zn.map((z,i)=>`<span><i class="k-rect" style="background:${zcol[i]}"></i>${z} <span class="num">${zr[i]}</span></span>`).join('');
+  mount('c-zones', {...base(),
+    tooltip:{...base().tooltip, formatter:ps=>{ const w=W[ps[0].dataIndex]; const t=w.zones.reduce((a,b)=>a+b,0)||1; return tip(`${md(w.start)} 주 · 총 ${fmtDur(t)}`, [...ps].reverse().map(p=>({c:p.color, v:`${Math.round(w.zones[p.seriesIndex]/t*100)}%`, l:`${zn[p.seriesIndex]} · ${fmtDur(w.zones[p.seriesIndex])}`}))); }},
+    xAxis:ax({type:'category', data:W.map(w=>md(w.start))}),
+    yAxis:ay({type:'value', minInterval:3600, interval:3600, axisLabel:{formatter:v=>`${v/3600}시간`}}),
+    series:zn.map((z,i)=>({name:z, type:'bar', stack:'z', data:W.map(w=>w.zones[i]), barMaxWidth:22, itemStyle:{color:zcol[i], borderColor:C('--card'), borderWidth:1, borderRadius: i===4?[4,4,0,0]:0}})),
+  });
+
+  // 디커플링
+  const D = R.filter(r=>r.decoupling!=null);
+  const c4 = mount('c-decouple', {...base(),
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ const r=p.data.run; return tip(`${md(r.start)} · ${r.name}`,[{v:`${r.decoupling.toFixed(1)}%`,l:'디커플링'},{v:`${f1(km(r.distance))}km · ${fmtDur(r.moving_s)}`,l:''}]); }},
+    xAxis:ax({type:'category', data:D.map(r=>md(r.start))}),
+    yAxis:ay({type:'value', axisLabel:{color:C('--ink-2'),fontSize:11,formatter:'{value}%'}}),
+    series:[{type:'bar', data:D.map(r=>({value:+r.decoupling.toFixed(1), run:r, itemStyle:{color: r.decoupling>5? C('--s2') : C('--s1')}})), barMaxWidth:16, itemStyle:{borderRadius:[4,4,0,0]},
+      markLine:{symbol:'none', silent:true, data:[{yAxis:5}], lineStyle:{color:C('--ink-2'),type:'dashed',width:1}, label:{formatter:'5% 기준', color:C('--ink-2'), fontSize:11, position:'insideEndTop'}}}],
+  });
+  if(c4 && !c4._bound){ c4._bound=true; c4.on('click', p=>{ if(p.data && p.data.run) openDrawer(p.data.run); }); }
+}
+
+/* 5.5 러닝 폼 */
+function renderForm(){
+  const W = periodWeeks(), R = periodRuns().filter(r=>r.type!=='race' && r.stride!=null && r.avg_cad!=null);
+  const T=SETTINGS.target_cadence, B=SETTINGS.cadence_band;
+  const cadData = W.map(w=>w.cad? +w.cad.toFixed(1) : null);
+  const recent = mean(W.slice(-4).map(w=>w.cad).filter(Boolean)), early = mean(W.slice(0,4).map(w=>w.cad).filter(Boolean));
+  document.getElementById('cad-chip').innerHTML = !isFinite(recent) ? '' : Math.abs(recent-T)<=B ? chip('good','ok',`목표 범위 · ${Math.round(recent)}spm`) : (recent>early+0.5 ? chip('info','up',`근접 중 · ${Math.round(recent)}spm`) : chip('warn','warn',`이탈 · ${Math.round(recent)}spm`));
+  const vals = cadData.filter(x=>x!=null);
+  mount('c-cad', {...base(),
+    tooltip:{...base().tooltip, formatter:ps=>{ const w=W[ps[0].dataIndex]; return w.cad? tip(`${md(w.start)} 주`,[{c:C('--s1'),v:`${w.cad.toFixed(1)}spm`,l:`평균 케이던스 · 목표까지 ${Math.max(0,T-w.cad).toFixed(1)}`}]) : tip(`${md(w.start)} 주`,[{v:'기록 없음',l:''}]); }},
+    xAxis:ax({type:'category', data:W.map(w=>md(w.start))}),
+    yAxis:ay({type:'value', min:Math.floor(Math.min(...vals, T-B)-3), max:Math.ceil(Math.max(...vals, T+B)+2), axisLabel:{color:C('--ink-2'),fontSize:11}}),
+    series:[{type:'line', data:cadData, connectNulls:true, symbol:'circle', symbolSize:6, showSymbol:W.length<=16, lineStyle:{width:2,color:C('--s1')}, itemStyle:{color:C('--s1')},
+      markArea:{silent:true, itemStyle:{color:'rgba(89,62,236,0.08)'}, data:[[{yAxis:T-B},{yAxis:T+B}]]},
+      markLine:{symbol:'none', silent:true, data:[{yAxis:T}], lineStyle:{color:C('--m1'),type:'dashed',width:1}, label:{formatter:`목표 ${T}`, color:C('--ink-2'), fontSize:11, position:'insideEndTop'}}}],
+  });
+
+  // 보폭 vs 페이스 (앞/뒤 절반 회귀)
+  const enough = R.length>=6;
+  const sorted=[...R].sort((a,b)=>a.start-b.start), half=Math.floor(sorted.length/2);
+  const A=sorted.slice(0,half), Bh=sorted.slice(half);
+  const fitS = g => linfit(g.map(r=>r.pace), g.map(r=>r.stride)), fitC = g => linfit(g.map(r=>r.pace), g.map(r=>r.avg_cad));
+  const fa=enough?fitS(A):{a:0,b:0}, fb=enough?fitS(Bh):{a:0,b:0};
+  const px=R.length?R.map(r=>r.pace):[300,400], pmin=Math.min(...px), pmax=Math.max(...px);
+  const line = (f,g) => { if(!enough) return []; const lo=Math.min(...g.map(r=>r.pace)), hi=Math.max(...g.map(r=>r.pace)); return [[lo, +(f.a+f.b*lo).toFixed(3)],[hi, +(f.a+f.b*hi).toFixed(3)]]; };
+  const cads=R.length?R.map(r=>r.avg_cad):[160,180], seq=SEQ();
+  const cmin=Math.floor(Math.min(...cads)), cmax=Math.ceil(Math.max(...cads));
+  document.getElementById('stride-legend').innerHTML = `<span>케이던스 ${cmin}</span><span style="display:inline-block;width:70px;height:8px;border-radius:4px;background:linear-gradient(90deg,${seq[1]},${seq[4]})"></span><span>${cmax}spm</span><span><i class="k-dash" style="border-color:${C('--s2')}"></i>앞 절반</span><span><i class="k-line" style="background:${C('--ink')}"></i>뒤 절반</span>`;
+  const c = mount('c-stride', {...base(), grid:{left:46,right:14,top:14,bottom:44},
+    tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ if(!p.data.run) return tip(p.seriesName,[{v:'추세선',l:''}]); const r=p.data.run; return tip(`${md(r.start)} · ${r.name}`,[{v:`${(r.stride*100).toFixed(0)}cm`,l:'보폭'},{v:`${Math.round(r.avg_cad)}spm`,l:'케이던스'},{v:`${fmtPace(r.pace)}/km`,l:'페이스'}]); }},
+    xAxis:ax({type:'value', inverse:true, min:Math.floor(pmin-5), max:Math.ceil(pmax+5), name:'페이스 (빠름 →)', nameLocation:'middle', nameGap:30, nameTextStyle:{color:C('--ink-2'),fontSize:11}, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>fmtPace(v)}}),
+    yAxis:ay({type:'value', scale:true, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>`${Math.round(v*100)}cm`}}),
+    visualMap:{show:false, seriesIndex:0, dimension:2, min:cmin, max:cmax, inRange:{color:[seq[1],seq[4]]}},
+    series:[
+      {type:'scatter', data:R.map(r=>({value:[Math.round(r.pace), +r.stride.toFixed(3), Math.round(r.avg_cad)], run:r})), symbolSize:9, itemStyle:{borderColor:C('--card'),borderWidth:1.5}},
+      {name:'앞 절반 추세', type:'line', data:line(fa,A), showSymbol:false, lineStyle:{width:2,type:'dashed',color:C('--s2')}},
+      {name:'뒤 절반 추세', type:'line', data:line(fb,Bh), showSymbol:false, lineStyle:{width:2,color:C('--ink')}},
+    ],
+  });
+  if(c && !c._bound){ c._bound=true; c.on('click', p=>{ if(p.data && p.data.run) openDrawer(p.data.run); }); }
+
+  // 인사이트: 속도 증가분 중 보폭/케이던스 기여
+  function share(g){ const fs=fitS(g), fc=fitC(g), p0=mean(g.map(r=>r.pace)); const s0=fs.a+fs.b*p0, c0=fc.a+fc.b*p0; const ds=-10*fs.b, dc=-10*fc.b; const lnS=Math.log((s0+ds)/s0), lnC=Math.log((c0+dc)/c0); const tot=lnS+lnC||1; return {ds, dc, sPct:Math.round(lnS/tot*100)}; }
+  const sa=enough?share(A):null, sb=enough?share(Bh):null;
+  const who = s => s.sPct>=50 ? '보폭' : '케이던스';
+  document.getElementById('stride-insight').innerHTML = !enough ? '러닝 기록이 6회 이상 쌓이면 보폭·케이던스 분석을 보여드려요.' : (Math.abs(sb.ds)<0.002 && Math.abs(sb.dc)<0.3) ? '이 기간에는 페이스에 따른 보폭·케이던스 변화가 뚜렷하지 않아요. 속도 차이가 큰 러닝(인터벌·템포)이 포함되면 분석이 더 선명해져요.' :
+    `페이스가 <b>10초/km 빨라질 때</b> 최근에는 보폭 <b>${sb.ds>=0?'+':''}${(sb.ds*100).toFixed(1)}cm</b>, 케이던스 <b>${sb.dc>=0?'+':''}${sb.dc.toFixed(1)}spm</b> → 속도 증가의 <b>${sb.sPct}%를 보폭</b>, ${100-sb.sPct}%를 케이던스로 커버하고 있어요. `+
+    `기간 앞 절반에는 보폭 비중이 ${sa.sPct}%였어요. 주로 <b>${who(sb)}</b>(으)로 속도를 내는 러너예요.`;
+
+  // 러닝 다이내믹스 (데이터 있을 때만)
+  const hasDyn = W.some(w=>w.gct.length);
+  document.getElementById('dyn-gct-card').classList.toggle('hidden', !hasDyn);
+  document.getElementById('dyn-vr-card').classList.toggle('hidden', !hasDyn);
+  if(hasDyn){
+    const box = arr => { if(!arr.length) return [null,null,null,null,null]; const s=[...arr].sort((a,b)=>a-b), q=p=>s[Math.min(s.length-1,Math.floor(p*(s.length-1)))]; return [s[0],q(.25),q(.5),q(.75),s[s.length-1]].map(x=>+x.toFixed(2)); };
+    const opt = (key, unit) => ({...base(),
+      tooltip:{...base().tooltip, trigger:'item', formatter:p=>{ const v=p.data; return tip(`${p.name} 주`,[{v:`${v[3]}${unit}`,l:'중앙값'},{v:`${v[2]}–${v[4]}${unit}`,l:'사분위 범위'}]); }},
+      xAxis:ax({type:'category', data:W.map(w=>md(w.start))}),
+      yAxis:ay({type:'value', scale:true, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:`{value}${unit}`}}),
+      series:[{type:'boxplot', data:W.map(w=>box(w[key])), itemStyle:{color:'rgba(89,62,236,0.12)', borderColor:C('--s1'), borderWidth:1.5}, boxWidth:[4,14]}],
+    });
+    mount('c-gct', opt('gct','ms')); mount('c-vr', opt('vr','%'));
+  }
+}
+
+/* 5.6 부하 & 회복 */
+function renderLoad(){
+  const s = periodWeeks()[0].start, L = LOAD.filter(x=>x.d>=s);
+  mount('c-load', {...base(), grid:{left:46,right:44,top:14,bottom:26},
+    tooltip:{...base().tooltip, formatter:ps=>{ const x=L[ps[0].dataIndex]; return tip(`${x.d.getFullYear()}.${md(x.d)}`,[{c:C('--s1'),v:Math.round(x.acute),l:'급성 부하 (7일)'},{c:C('--s2'),v:Math.round(x.chronic),l:'만성 부하 (28일 주평균)'},{v:Math.round(x.t),l:'당일 TRIMP'}]); }},
+    xAxis:ax({type:'category', data:L.map(x=>md(x.d)), boundaryGap:false}),
+    yAxis:ay({type:'value'}),
+    series:[
+      {name:'급성', type:'line', data:L.map(x=>Math.round(x.acute)), showSymbol:false, lineStyle:{width:2,color:C('--s1')}, itemStyle:{color:C('--s1')}, areaStyle:{color:'rgba(89,62,236,0.08)'}, endLabel:{show:true,formatter:'급성',color:C('--ink-2'),fontSize:11}},
+      {name:'만성', type:'line', data:L.map(x=>Math.round(x.chronic)), showSymbol:false, lineStyle:{width:2,color:C('--s2')}, itemStyle:{color:C('--s2')}, endLabel:{show:true,formatter:'만성',color:C('--ink-2'),fontSize:11}},
+    ],
+  });
+  const last = lastOf(LOAD), st = acwrState(last.acwr);
+  document.getElementById('acwr-chip').innerHTML = last.acwr==null ? chip('mute','','28일 이상 기록 필요') : chip(st.cls, st.icon, `${st.t} · ${last.acwr.toFixed(2)}`);
+  const good = C('--good'), bad = C('--bad');
+  mount('c-acwr', {...base(), grid:{left:46,right:14,top:10,bottom:26},
+    tooltip:{...base().tooltip, formatter:ps=>{ const x=L[ps[0].dataIndex]; const a=acwrState(x.acwr); return tip(`${x.d.getFullYear()}.${md(x.d)}`,[{c:C('--s1'),v:x.acwr?x.acwr.toFixed(2):'—',l:`ACWR · ${a.t}`}]); }},
+    xAxis:ax({type:'category', data:L.map(x=>md(x.d)), boundaryGap:false}),
+    yAxis:ay({type:'value', min:0, max:v=>Math.max(2,Math.ceil(v.max*10)/10), axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>v.toFixed(1)}}),
+    series:[{type:'line', data:L.map(x=>x.acwr==null?null:+x.acwr.toFixed(2)), showSymbol:false, lineStyle:{width:2,color:C('--s1')},
+      markArea:{silent:true, data:[
+        [{yAxis:0.8, itemStyle:{color:echarts.color.modifyAlpha(good,0.12)}, label:{show:true, position:'insideRight', formatter:'적정', color:C('--ink-2'), fontSize:11}},{yAxis:1.3}],
+        [{yAxis:1.5, itemStyle:{color:echarts.color.modifyAlpha(bad,0.10)}, label:{show:true, position:'insideRight', formatter:'위험', color:C('--ink-2'), fontSize:11}},{yAxis:5}],
+      ]}}],
+  });
+
+  // 회복
+  const rec = recoveryState(), size=120, sw=12, r=(size-sw)/2, c=2*Math.PI*r, f=clamp(1-rec.left/rec.need,0,1);
+  document.getElementById('recovery').innerHTML =
+    `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="회복 ${Math.round(f*100)}%"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${C('--soft')}" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${C('--s1')}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(c*f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-size="20" font-weight="800" fill="${C('--ink')}" font-family="Pretendard">${Math.round(f*100)}%</text></svg>`+
+    `<div class="gauge-txt"><div class="big num">${Math.round(rec.left)}<small>시간 남음</small></div><div class="sub" style="color:var(--ink-2);font-size:12.5px">마지막: ${md(rec.last.start)} ${esc(rec.last.name)}<br>TRIMP ${Math.round(rec.last.trimp)} · 권장 회복 ${Math.round(rec.need)}시간</div></div>`;
+  const L7 = LOAD.slice(-7);
+  mount('c-load7', {...base(), grid:{left:36,right:8,top:18,bottom:24},
+    tooltip:{...base().tooltip, formatter:ps=>{ const x=L7[ps[0].dataIndex]; const o=DAY.get(x.key); return tip(`${md(x.d)} (${DOW[x.d.getDay()]})`,[{c:C('--s1'),v:Math.round(x.t),l:o?o.runs.map(r=>r.name).join(', '):'휴식'}]); }},
+    xAxis:ax({type:'category', data:L7.map(x=>DOW[x.d.getDay()])}),
+    yAxis:ay({type:'value', splitNumber:2}),
+    series:[{type:'bar', data:L7.map(x=>Math.round(x.t)), barMaxWidth:20, itemStyle:{color:C('--s1'),borderRadius:[4,4,0,0]}, label:{show:true,position:'top',color:C('--ink-2'),fontSize:10,formatter:p=>p.value||''}}],
+  });
+
+  // VO2max
+  const W = periodWeeks();
+  const gv = GARMIN.filter(g=>g.vo2max!=null);
+  document.getElementById('vo2-sub').textContent = gv.length ? '가민에서 직접 입력한 값' : '최근 90일 best effort 기반 VDOT';
+  document.getElementById('vo2-badge').textContent = gv.length ? '가민' : 'VDOT 추정';
+  if(gv.length) mount('c-vo2', {...base(), grid:{left:40,right:14,top:14,bottom:26},
+    tooltip:{...base().tooltip, formatter:ps=>{ const g=gv[ps[0].dataIndex]; return tip(g.date,[{c:C('--s1'),v:fx(+g.vo2max),l:'VO2max (가민)'}]); }},
+    xAxis:ax({type:'category', data:gv.map(g=>g.date.slice(5)), boundaryGap:false}),
+    yAxis:ay({type:'value', scale:true, axisLabel:{formatter:v=>v.toFixed(0)}}),
+    series:[{type:'line', data:gv.map(g=>+g.vo2max), showSymbol:gv.length<30, lineStyle:{width:2,color:C('--s1')}, itemStyle:{color:C('--s1')}, areaStyle:{color:'rgba(89,62,236,0.08)'}}],
+  }); else
+  mount('c-vo2', {...base(), grid:{left:40,right:14,top:14,bottom:26},
+    tooltip:{...base().tooltip, formatter:ps=>{ const w=W[ps[0].dataIndex]; return tip(`${md(w.start)} 주`,[{c:C('--s1'),v:w.vdot?w.vdot.toFixed(1):'—',l:'VDOT (VO2max 추정)'}]); }},
+    xAxis:ax({type:'category', data:W.map(w=>md(w.start)), boundaryGap:false}),
+    yAxis:ay({type:'value', scale:true, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>v.toFixed(0)}}),
+    series:[{type:'line', data:W.map(w=>w.vdot?+w.vdot.toFixed(1):null), connectNulls:true, showSymbol:false, smooth:.2, lineStyle:{width:2,color:C('--s1')}, areaStyle:{color:'rgba(89,62,236,0.08)'}}],
+  });
+}
+
+/* 5.8 코스 */
+let routesMap=null, routesLayer=null, tileLayer=null;
+function tileUrl(){ return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; }
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+function renderRoutes(){
+  const R = periodRuns();
+  if(!routesMap){
+    routesMap = L.map('routes-map', {scrollWheelZoom:false}).setView([37.53,127.02], 12);
+    tileLayer = L.tileLayer(tileUrl(), {attribution:TILE_ATTR, maxZoom:18}).addTo(routesMap);
+  }
+  if(routesLayer) routesLayer.remove();
+  routesLayer = L.featureGroup();
+  const col = C('--s1');
+  for(const r of R){
+    if(r.poly.length<2) continue;
+    L.polyline(r.poly, {color:col, weight:3, opacity:0.18, interactive:true}).on('click',()=>openDrawer(r)).bindTooltip(`${md(r.start)} ${esc(r.name)} · ${f1(km(r.distance))}km`, {sticky:true}).addTo(routesLayer);
+  }
+  routesLayer.addTo(routesMap);
+  if(R.length) routesMap.fitBounds(routesLayer.getBounds(), {padding:[20,20]});
+
+  const list = [...R].reverse();
+  document.getElementById('act-sub').textContent = `기간 내 ${R.length}회 · 행을 누르면 상세가 열려요`;
+  document.getElementById('act-body').innerHTML = list.slice(0,30).map(r=>`<tr tabindex="0" data-run="${r.id}"><td class="num">${r.start.getFullYear()}.${md(r.start)} (${DOW[r.start.getDay()]})</td><td class="l"><span class="typ">${TYPE_LABEL[r.type]}</span>${esc(r.name)}</td><td class="num">${f1(km(r.distance))}km</td><td class="num">${fmtDur(r.moving_s)}</td><td class="num">${fmtPace(r.pace)}/km</td><td class="num">${Math.round(r.avg_hr)}</td><td class="num">${Math.round(r.avg_cad)}</td><td class="num">${Math.round(r.elev_gain)}m</td></tr>`).join('')
+    + (list.length>30 ? `<tr><td colspan="8" class="l" style="color:var(--ink-2)">최근 30건만 표시 · 전체 ${list.length}건</td></tr>` : '');
+}
+
+/* =====================================================================
+ * 활동 상세 드로어
+ * ===================================================================== */
+let dMap=null, dTile=null, dLayer=null, dMarker=null, dCur=null, dMode='pace', dStreams=null;
+function lerpColor(a,b,t){ const pa=parseInt(a.slice(1),16), pb=parseInt(b.slice(1),16); const ch=(s)=>[(s>>16)&255,(s>>8)&255,s&255]; const A=ch(pa),B=ch(pb); return '#'+A.map((x,i)=>Math.round(x+(B[i]-x)*t).toString(16).padStart(2,'0')).join(''); }
+function rampColor(t){ const e=C('--route-easy'), m=C('--route-mid'), h=C('--route-hard'); return t<0.5 ? lerpColor(e,m,t*2) : lerpColor(m,h,(t-0.5)*2); }
+function pctl(arr,p){ const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(p*(s.length-1))]; }
+
+async function loadStreams(r){
+  if(MODE!=='real') return genStreams(r, true);
+  const rows = await sbGet(`activity_streams?activity_id=eq.${r.id}&select=data`);
+  const d = rows[0] && rows[0].data;
+  if(!d || !d.time || d.time.length<2) return null;
+  const fill = (a, def=0) => { let prev=null; const o=a.map(v=>{ if(v!=null) prev=v; return prev; }); const first=o.find(v=>v!=null); return o.map(v=>v!=null?v:(first!=null?first:def)); };
+  const n = d.time.length;
+  const alt = fill(d.altitude||[]), vel = fill(d.velocity_smooth||[]), hr = fill(d.heartrate||[]), cad = fill(d.cadence||[]);
+  const pad0 = a => a.length===n ? a : Array(n).fill(0);
+  const dist = d.distance, grade = [];
+  for(let i=0;i<n;i++){ const a=Math.max(0,i-3), b=Math.min(n-1,i+3); grade.push((pad0(alt)[b]-pad0(alt)[a])/Math.max(1,dist[b]-dist[a])); }
+  return {time:d.time, dist, vel:pad0(vel), alt:pad0(alt), grade, hr:pad0(hr), cad:pad0(cad), ll:d.latlng||Array(n).fill(null)};
+}
+async function openDrawer(r){
+  if(!r) return;
+  let streams;
+  try{ streams = await loadStreams(r); }catch(e){ console.error(e); streams = null; }
+  if(!streams){ alert('이 활동의 상세 기록(스트림)을 불러오지 못했어요.'); return; }
+  dCur = r; dStreams = streams;
+  const s = dStreams;
+  document.getElementById('d-title').textContent = r.name;
+  document.getElementById('d-sub').textContent = `${r.start.getFullYear()}.${md(r.start)} (${DOW[r.start.getDay()]}) ${pad(r.start.getHours())}:${pad(r.start.getMinutes())} · ${TYPE_LABEL[r.type]}${r.route&&ROUTES[r.route]?' · '+ROUTES[r.route].label:''}`;
+  const st = [
+    [`${f1(km(r.distance))}km`,'거리'],[fmtDur(r.moving_s),'이동 시간'],[`${fmtPace(r.pace)}/km`,'평균 페이스'],[r.avg_hr!=null?`${Math.round(r.avg_hr)}bpm`:'—',`평균 심박${r.max_hr!=null?` (최대 ${Math.round(r.max_hr)})`:''}`],[r.avg_cad!=null?`${Math.round(r.avg_cad)}spm`:'—','케이던스'],
+    [r.stride!=null?`${(r.stride*100).toFixed(0)}cm`:'—', r.strideMeasured?'보폭 (가민)':'보폭 (추정)'],[r.elev_gain!=null?`${Math.round(r.elev_gain)}m`:'—','누적 상승'],[fx(r.ef,2),'EF'],[Math.round(r.trimp||0),'TRIMP (추정)'],[r.decoupling!=null?`${r.decoupling.toFixed(1)}%`:'—','디커플링'],
+  ];
+  document.getElementById('d-stats').innerHTML = st.map(([v,l])=>`<div class="dstat"><div class="v num">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join('');
+  document.getElementById('drawer').classList.add('on'); document.getElementById('scrim').classList.add('on');
+  document.getElementById('drawer').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>{ drawMap(); drawDrawerCharts(); document.getElementById('d-close').focus(); }, 260);
+  renderSplits();
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('on'); document.getElementById('scrim').classList.remove('on');
+  document.getElementById('drawer').setAttribute('aria-hidden','true'); document.body.style.overflow='';
+}
+function trimmedIdx(){ const s=dStreams, R=SETTINGS.privacy_radius_m, D=dCur.distance, out=[]; for(let i=0;i<s.dist.length;i++) if(s.dist[i]>=R && s.dist[i]<=D-R && s.ll[i]) out.push(i); return out; }
+function drawMap(){
+  if(!dMap){ dMap = L.map('d-map', {scrollWheelZoom:false}).setView([37.55,126.98], 11); dTile = L.tileLayer(tileUrl(), {attribution:TILE_ATTR, maxZoom:18}).addTo(dMap);
+    dMap.on('mousemove', e=>{ if(!dStreams) return; const idx=trimmedIdx(); let best=-1,bd=Infinity; const p=dMap.latLngToContainerPoint(e.latlng);
+      for(let k=0;k<idx.length;k+=2){ const q=dMap.latLngToContainerPoint(dStreams.ll[idx[k]]); const dd=(q.x-p.x)**2+(q.y-p.y)**2; if(dd<bd){bd=dd;best=idx[k];} }
+      if(bd<900){ showPoint(best); ['d-elev','d-pace','d-hr'].forEach(id=>charts[id]&&charts[id].dispatchAction({type:'showTip', seriesIndex:0, dataIndex:best})); }
+    });
+  }
+  dMap.invalidateSize();
+  if(dLayer) dLayer.remove();
+  dLayer = L.featureGroup();
+  const s=dStreams, idx=trimmedIdx();
+  document.getElementById('d-map').classList.toggle('nogps', idx.length<2);
+  if(idx.length<2){ if(dMarker){ dMarker.remove(); dMarker=null; } return; }
+  const metric = dMode==='pace' ? s.vel : dMode==='hr' ? s.hr : s.grade;
+  const vals = idx.map(i=>metric[i]), lo=pctl(vals,.05), hi=pctl(vals,.95);
+  for(let k=0;k<idx.length-1;k+=2){
+    const a=idx[k], b=idx[Math.min(k+2,idx.length-1)];
+    const t = clamp((metric[a]-lo)/((hi-lo)||1),0,1);
+    const seg = s.ll.slice(a,b+1).filter(Boolean);   // GPS가 끊긴 지점(null)은 건너뜀
+    if(seg.length>1) L.polyline(seg, {color:rampColor(t), weight:5, opacity:.95, interactive:false}).addTo(dLayer);
+  }
+  dLayer.addTo(dMap);
+  dMap.fitBounds(dLayer.getBounds(), {padding:[16,16]});
+  if(dMarker) dMarker.remove();
+  dMarker = L.circleMarker(s.ll[idx[0]], {radius:7, color:'#fff', weight:3, fillColor:C('--m1'), fillOpacity:1}).addTo(dMap);
+  const leg = {pace:['느림','빠름'], hr:[`${Math.round(pctl(s.hr,.05))}bpm`,`${Math.round(pctl(s.hr,.95))}bpm`], grade:['내리막','오르막']}[dMode];
+  document.getElementById('d-leg-lo').textContent = leg[0]; document.getElementById('d-leg-hi').textContent = leg[1];
+}
+function showPoint(i){ if(!dMarker||!dStreams||!dStreams.ll[i]) return; const R=SETTINGS.privacy_radius_m, d=dStreams.dist[i]; if(d<R||d>dCur.distance-R){ dMarker.setStyle({opacity:0,fillOpacity:0}); return; } dMarker.setStyle({opacity:1,fillOpacity:1}); dMarker.setLatLng(dStreams.ll[i]); }
+function drawDrawerCharts(){
+  const s=dStreams, xs=s.dist.map(d=>+(d/1000).toFixed(3));
+  const common = (id, data, yopt, series, fmt) => {
+    const c = mount(id, {...base(), grid:{left:48,right:12,top:8,bottom:24},
+      tooltip:{...base().tooltip, formatter:ps=>{ const i=ps[0].dataIndex; return tip(`${xs[i].toFixed(2)}km · ${fmtDur(s.time[i])}`,[fmt(i)]); }},
+      xAxis:ax({type:'value', min:0, max:+(dCur.distance/1000).toFixed(2), axisLabel:{color:C('--ink-2'),fontSize:11,formatter:'{value}km'}}),
+      yAxis:ay(yopt), series:[{type:'line', data, showSymbol:false, sampling:'lttb', ...series}],
+    });
+    if(c){ c.group='drawer'; if(!c._bound){ c._bound=true; c.on('updateAxisPointer', e=>{ const a=e.axesInfo&&e.axesInfo[0]; if(!a) return; const v=a.value*1000; let lo=0,hi=s.dist.length-1; while(lo<hi){const m=(lo+hi)>>1; if(dStreams.dist[m]<v) lo=m+1; else hi=m;} showPoint(lo); }); } }
+  };
+  // 오르막(경사 4%+) 구간 음영
+  const ups=[]; let st=null; for(let i=0;i<s.grade.length;i++){ if(s.grade[i]>=0.04 && st==null) st=i; if((s.grade[i]<0.04||i===s.grade.length-1) && st!=null){ if(s.dist[i]-s.dist[st]>80) ups.push([{xAxis:xs[st]},{xAxis:xs[i]}]); st=null; } }
+  const amin=Math.min(...s.alt), amax=Math.max(...s.alt);
+  common('d-elev', xs.map((x,i)=>[x,+s.alt[i].toFixed(1)]), {type:'value', min:Math.floor(amin-5), max:Math.ceil(amax+5), splitNumber:2, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:'{value}m'}},
+    {lineStyle:{width:1.5,color:C('--ink-2')}, areaStyle:{color:echarts.color.modifyAlpha(C('--ink-2'),0.15)}, markArea:{silent:true, itemStyle:{color:echarts.color.modifyAlpha(C('--bad'),0.12)}, data:ups}},
+    i=>({c:C('--ink-2'), v:`${Math.round(s.alt[i])}m`, l:`고도 · 경사 ${(s.grade[i]*100).toFixed(1)}%`}));
+  const pace = s.vel.map(v=>Math.min(600, 1000/v));
+  common('d-pace', xs.map((x,i)=>[x,Math.round(pace[i])]), {type:'value', inverse:true, min:Math.floor(pctl(pace,.01)/10)*10-10, max:Math.ceil(pctl(pace,.99)/10)*10+10, splitNumber:2, axisLabel:{color:C('--ink-2'),fontSize:11,formatter:v=>fmtPace(v)}},
+    {lineStyle:{width:1.5,color:C('--s1')}}, i=>({c:C('--s1'), v:`${fmtPace(pace[i])}/km`, l:'페이스'}));
+  common('d-hr', xs.map((x,i)=>[x,s.hr[i]]), {type:'value', scale:true, splitNumber:2, axisLabel:{color:C('--ink-2'),fontSize:11}},
+    {lineStyle:{width:1.5,color:C('--s1')}}, i=>({c:C('--s1'), v:`${s.hr[i]}bpm`, l:`심박 · 케이던스 ${s.cad[i]}spm`}));
+  echarts.connect('drawer');
+}
+function renderSplits(){
+  const s=dStreams, out=[]; let k=1, prevT=0, prevI=0;
+  const tAt = D => { let i=1; while(i<s.dist.length && s.dist[i]<D) i++; if(i>=s.dist.length) return {t:s.time[s.time.length-1], i:s.dist.length-1}; const f=(D-s.dist[i-1])/((s.dist[i]-s.dist[i-1])||1); return {t:s.time[i-1]+f*10, i}; };
+  while(true){
+    const D = Math.min(k*1000, dCur.distance); const {t,i} = tAt(D); const seg=D-(k-1)*1000; if(seg<50) break;
+    const sl=(a)=>a.slice(prevI, Math.max(prevI+1,i));
+    out.push({k, D:seg, pace:(t-prevT)/(seg/1000), hr:mean(sl(s.hr)), cad:mean(sl(s.cad)), dz:s.alt[Math.min(i,s.alt.length-1)]-s.alt[prevI]});
+    prevT=t; prevI=i; if(D>=dCur.distance) break; k++;
+  }
+  const fast=Math.min(...out.map(o=>o.pace)), slow=Math.max(...out.map(o=>o.pace));
+  document.getElementById('d-splits').innerHTML = out.map(o=>`<tr><td class="num">${o.D<999?f1(o.D/1000):o.k}</td><td class="l"><span class="split-bar" style="width:${Math.round(30+70*(1-(o.pace-fast)/((slow-fast)||1)))}%;${o.pace===fast?'':'opacity:.55'}"></span></td><td class="num"><b>${fmtPace(o.pace)}</b></td><td class="num">${Math.round(o.hr)}</td><td class="num">${Math.round(o.cad)}</td><td class="num">${o.dz>=0?'+':''}${Math.round(o.dz)}m</td></tr>`).join('');
+}
+
+/* =====================================================================
+ * 이벤트 · 테마 · 초기화
+ * ===================================================================== */
+function isDark(){ const t=document.documentElement.getAttribute('data-theme'); return t ? t==='dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+function renderPeriod(){ renderVolume(); renderEfficiency(); renderForm(); renderLoad(); renderRoutes(); }
+function renderAll(){ renderHero(); renderCalHeat(); renderMonthCal(); renderPunch(); renderYoY(); renderPR(); renderPeriod(); }
+
+document.getElementById('period-seg').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  periodW = +b.dataset.w;
+  document.querySelectorAll('#period-seg button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+  renderPeriod();
+});
+document.getElementById('pr-tabs').addEventListener('click', e=>{ const b=e.target.closest('.tab'); if(!b) return; prTab=b.dataset.k; renderPR(); });
+document.getElementById('m-prev').addEventListener('click', ()=>{ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()-1, 1); renderMonthCal(); });
+document.getElementById('m-next').addEventListener('click', ()=>{ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()+1, 1); renderMonthCal(); });
+document.addEventListener('click', e=>{ const el=e.target.closest('[data-run]'); if(el && !el.closest('#drawer')) openDrawer(RUN_BY_ID.get(+el.dataset.run)); });
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeDrawer();
+  if((e.key==='Enter'||e.key===' ') && e.target.matches('[data-run][tabindex]')){ e.preventDefault(); openDrawer(RUN_BY_ID.get(+e.target.dataset.run)); }
+});
+document.getElementById('scrim').addEventListener('click', closeDrawer);
+document.getElementById('d-close').addEventListener('click', closeDrawer);
+document.getElementById('d-mode').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; dMode=b.dataset.m; document.querySelectorAll('#d-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawMap(); });
+document.getElementById('theme-btn').addEventListener('click', ()=>{
+  document.documentElement.setAttribute('data-theme', isDark() ? 'light' : 'dark');
+  try{ localStorage.setItem('runlog-theme', document.documentElement.getAttribute('data-theme')); }catch(e){}
+  applyTheme();
+});
+function applyTheme(){ if(tileLayer) tileLayer.setUrl(tileUrl()); if(dTile) dTile.setUrl(tileUrl()); renderAll(); if(document.getElementById('drawer').classList.contains('on')){ drawMap(); drawDrawerCharts(); } }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ if(!document.documentElement.getAttribute('data-theme')) applyTheme(); });
+const setHdr = () => document.documentElement.style.setProperty('--hdr', document.querySelector('.topbar').offsetHeight+'px');
+let rt; window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(setHdr,120); });
+setHdr();
+
+try{ const t=localStorage.getItem('runlog-theme'); if(t) document.documentElement.setAttribute('data-theme', t); }catch(e){}
+
+/* =====================================================================
+ * 6. 데이터 로딩 — Supabase(실데이터) → 비었거나 실패하면 목데이터
+ * ===================================================================== */
+async function sbGet(path){
+  const out = [];
+  for(let off=0; ; off+=1000){
+    const r = await fetch(`${SB_URL}/rest/v1/${path}`, {headers:{apikey:SB_KEY, 'Range-Unit':'items', Range:`${off}-${off+999}`}});
+    if(!r.ok) throw new Error(`Supabase ${r.status} ${path.split('?')[0]}`);
+    const rows = await r.json(); out.push(...rows);
+    if(rows.length<1000) break;
+  }
+  return out;
+}
+function decodePolyline(str){
+  const pts=[]; let i=0, lat=0, lng=0;
+  while(i<str.length){
+    for(const axis of [0,1]){ let b, shift=0, res=0; do{ b=str.charCodeAt(i++)-63; res|=(b&0x1f)<<shift; shift+=5; }while(b>=0x20); const d=(res&1)?~(res>>1):(res>>1); if(axis===0) lat+=d; else lng+=d; }
+    pts.push([lat/1e5, lng/1e5]);
+  }
+  return pts;
+}
+const num = v => v==null ? null : +v;
+const ACT_COLS = 'id,start_at,name,sport_type,distance_m,moving_s,elapsed_s,elev_gain_m,avg_hr,max_hr,avg_cadence_spm,avg_speed_mps,gear_id,polyline,decoupling_pct,z1_s,z2_s,z3_s,z4_s,z5_s,gct_ms,vertical_ratio_pct,vertical_osc_cm,stride_m,stride_m_garmin,ef,pace_s_per_km,trimp';
+
+async function loadReal(){
+  const acts = await sbGet(`v_activities?select=${ACT_COLS}&order=start_at.asc`);
+  if(!acts.length) return false;
+  const [efforts, st, gear, metrics, sync] = await Promise.all([
+    sbGet('best_efforts?select=activity_id,effort_key,elapsed_s'),
+    sbGet('v_settings?select=*'),
+    sbGet('gear?select=*').catch(()=>[]),
+    sbGet('daily_metrics?select=date,vo2max,acute_load,recovery_hours,resting_hr&order=date.asc').catch(()=>[]),
+    sbGet('v_sync_status?select=*').catch(()=>[]),
+  ]);
+  const bestBy = new Map();
+  for(const e of efforts){ if(!bestBy.has(e.activity_id)) bestBy.set(e.activity_id,{}); bestBy.get(e.activity_id)[e.effort_key]=e.elapsed_s; }
+  if(st[0]){ Object.assign(SETTINGS, {target_cadence:st[0].target_cadence, cadence_band:st[0].cadence_band, weekly_goal_km:st[0].weekly_goal_km, privacy_radius_m:st[0].privacy_radius_m, resting_hr:+st[0].resting_hr, max_hr_eff:num(st[0].max_hr)}); }
+  RUNS.length = 0;
+  for(const a of acts){
+    RUNS.push({
+      id:+a.id, start:new Date(a.start_at), name:a.name||'러닝', type:'easy', route:null,
+      distance:+a.distance_m, moving_s:+a.moving_s, elapsed_s:+a.elapsed_s,
+      avg_hr:num(a.avg_hr), max_hr:num(a.max_hr), avg_cad:num(a.avg_cadence_spm),
+      speed:+a.avg_speed_mps, pace:+a.pace_s_per_km, stride:num(a.stride_m), strideMeasured:a.stride_m_garmin!=null, ef:num(a.ef),
+      elev_gain:num(a.elev_gain_m), decoupling:num(a.decoupling_pct),
+      best:bestBy.get(+a.id)||{}, zones:[a.z1_s,a.z2_s,a.z3_s,a.z4_s,a.z5_s].map(v=>v||0),
+      poly:a.polyline?decodePolyline(a.polyline):[], gear:a.gear_id, trimp:num(a.trimp)||0,
+      gct:num(a.gct_ms), vr:num(a.vertical_ratio_pct),
+    });
+  }
+  // 종류 자동 분류: 15km 이상 롱런, 기간 중앙 페이스보다 8% 이상 빠르면 템포, 그 외 이지 (FIT에는 훈련 종류가 없음)
+  const med = [...RUNS].map(r=>r.pace).sort((x,y)=>x-y)[Math.floor(RUNS.length/2)];
+  for(const r of RUNS) r.type = r.distance>=15000 ? 'long' : r.pace < med*0.92 ? 'tempo' : 'easy';
+  GEAR = gear; GARMIN = metrics;
+  const ts = sync.map(x=>x.last_success_at).filter(Boolean).sort();
+  SYNC_AT = ts.length ? new Date(lastOf(ts)) : null;
+  NOW = new Date();
+  START = RUNS[0].start; LAST_DAY = lastOf(RUNS).start;
+  return true;
+}
+function showBanner(msg, kind){
+  const el = document.getElementById('mode-banner'); el.className = 'banner '+(kind||''); el.innerHTML = msg;
+}
+async function boot(){
+  let why = null;
+  if(FORCE_MOCK) why = '?mock=1 로 샘플 보기를 켰어요.';
+  else {
+    try{ if(await loadReal()) MODE='real'; else why = '아직 가져온 러닝 기록이 없어요. <code>scripts/import_fit.py</code>로 가민 FIT를 가져오면 실제 기록으로 바뀌어요.'; }
+    catch(e){ console.error(e); why = 'Supabase에 연결하지 못해 샘플 데이터를 보여드려요.'; }
+  }
+  if(MODE==='mock'){
+    NOW = new Date(2026, 9, 22, 8, 0); START = new Date(2025, 0, 6); LAST_DAY = new Date(2026, 9, 21);
+    RUNS.length = 0; generateMock();
+    showBanner(`<b>샘플 데이터</b> · ${why}`, 'mock');
+  } else showBanner('', 'hidden');
+  RUN_BY_ID = new Map(RUNS.map(r=>[r.id,r]));
+  calMonth = new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+  aggregate();
+  renderAll();
+}
+boot();
+</script>
+</body>
+</html>
